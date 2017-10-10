@@ -1,4 +1,5 @@
 use ndarray::Array2;
+use effects::Effect;
 use entities::Entity;
 use entities::structure::Structure;
 
@@ -36,7 +37,7 @@ impl Grid {
 
     //returns previous cell state
     fn update(&mut self, at: (usize, usize), with_cell: Option<Entity>) -> CellState {
-        let cell_state = self.get_cell_state(at);
+        let cell_state = self.cell_state(at);
 
         if cell_state != CellState::OutOfBounds {
             self.cells[at] = with_cell;
@@ -53,7 +54,7 @@ impl Grid {
         self.update(at, None)
     }
 
-    pub fn get_cell_state(&self, at: (usize, usize)) -> CellState {
+    pub fn cell_state(&self, at: (usize, usize)) -> CellState {
         match self.cells.get(at) {
             Some(cell) =>
                 match cell {
@@ -88,7 +89,7 @@ impl GridCursor {
         }
     }
 
-    pub fn get_position(&self) -> (usize, usize) {
+    pub fn position(&self) -> (usize, usize) {
         self.cell
     }
 
@@ -117,7 +118,10 @@ impl GridCursor {
 
         let effect_area = grid.cells.slice(s![rows, cols]);
 
-        //TODO - process effects
+        //TODO - process entity-local effects
+        //TODO - process global effects
+        //TODO - process resource production
+        //TODO - process walker production
         //TODO - process action queue
 
         let (next_cell_x, next_cell_y) = match self.direction {

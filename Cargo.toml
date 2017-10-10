@@ -5,3 +5,11 @@ authors = ["sndnv"]
 
 [dependencies]
 ndarray = "0.10.0"
+
+[lib]
+name = "owe"
+path = "src/lib.rs"
+
+[[bin]]
+name = "owebin"
+path = "src/main.rs"
