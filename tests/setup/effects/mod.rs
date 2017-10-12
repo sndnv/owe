@@ -10,7 +10,7 @@ struct TestEffect3 {}
 impl effects::Effect for TestEffect1 {
     fn apply(&self, other_entity: &mut Entity) -> () {
         match other_entity {
-            &mut Entity::Structure { ref mut data } => {
+            &mut Entity::Structure { ref mut data, .. } => {
                 data.cost = 9001;
                 if data.employees.current < data.employees.required {
                     data.employees.current += 1;
@@ -27,7 +27,7 @@ impl effects::Effect for TestEffect1 {
 impl effects::Effect for TestEffect2 {
     fn apply(&self, other_entity: &mut Entity) -> () {
         match other_entity {
-            &mut Entity::Structure { ref mut data } => {
+            &mut Entity::Structure { ref mut data, .. } => {
                 data.risk.fire += 5;
                 if data.desirability.3 > 0 {
                     data.desirability.3 = -5;
@@ -45,12 +45,12 @@ impl effects::Effect for TestEffect2 {
 impl effects::Effect for TestEffect3 {
     fn apply(&self, other_entity: &mut Entity) -> () {
         match other_entity {
-            &mut Entity::Resource { ref mut data } => {
+            &mut Entity::Resource { ref mut data, .. } => {
                 if data.level.current > 0 {
                     data.level.current -= 5;
                 }
             }
-            &mut Entity::Walker { ref mut data } => {
+            &mut Entity::Walker { ref mut data, .. } => {
                 match data.life {
                     Some(level) => if level > 0 { data.life = Some(level - 1) },
                     None => data.life = Some(100)

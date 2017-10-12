@@ -1,5 +1,6 @@
 #[macro_use(s)]
 extern crate ndarray;
+extern crate uuid;
 
 pub mod grid;
 pub mod effects;

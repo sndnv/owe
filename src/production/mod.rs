@@ -1,3 +1,5 @@
+pub mod exchange;
+
 use entities::walker::Walker;
 
 #[derive(Debug)]

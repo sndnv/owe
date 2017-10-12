@@ -1,3 +1,5 @@
+use uuid::Uuid;
+
 pub mod structure;
 pub mod resource;
 pub mod doodad;
@@ -11,12 +13,16 @@ pub enum State {
     Deleted
 }
 
+//TODO - Move state data from each struct into the enums
+//TODO - * original structs become simple descriptors/props
+//TODO - * all runtime state is stored here
+//TODO - * data field -> props field that references static (?) props/descriptors
 #[derive(Debug)]
 pub enum Entity {
     Road,
     Roadblock,
     Doodad { data: doodad::Doodad },
     Resource { data: resource::Resource },
-    Structure { data: structure::Structure },
-    Walker { data: walker::Walker }
+    Structure { id: Uuid, data: structure::Structure },
+    Walker { id: Uuid, data: walker::Walker }
 }

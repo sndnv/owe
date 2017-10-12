@@ -1,11 +1,13 @@
+use std::collections::HashMap;
+
 #[derive(Debug)]
 pub struct Employees {
     pub required: u8,
-    pub current: u8
+    pub current: u8 //TODO - move to enum
 }
 
 #[derive(Debug)]
-pub struct Risk {
+pub struct Risk { //TODO - move to enum
     pub fire: u8,
     pub damage: u8
 }
@@ -31,5 +33,6 @@ pub struct Structure {
     pub cost: u32,
     pub desirability: (i8, i8, i8, i8, i8, i8),
     pub risk: Risk,
+    pub commodities: HashMap<String, u32>, //TODO - move to enum
     pub structure_type: Type
 }

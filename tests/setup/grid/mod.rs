@@ -4,6 +4,8 @@ use owe::entities::resource;
 use owe::entities::structure;
 use owe::entities::walker;
 use owe::entities::Entity;
+use std::collections::HashMap;
+use uuid::Uuid;
 
 pub fn default_grid() -> grid::Grid {
     let mut g = grid::Grid::new(3);
@@ -21,7 +23,8 @@ pub fn default_grid() -> grid::Grid {
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
         risk: structure::Risk { damage: 0, fire: 0 },
-        structure_type: structure::Type::Housing
+        structure_type: structure::Type::Housing,
+        commodities: HashMap::new()
     };
 
     let s1 = structure::Structure {
@@ -31,21 +34,33 @@ pub fn default_grid() -> grid::Grid {
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
         risk: structure::Risk { damage: 10, fire: 3 },
-        structure_type: structure::Type::Industry
+        structure_type: structure::Type::Industry,
+        commodities: HashMap::new()
     };
 
 
-    let w0 = walker::Walker { name: "w0".to_owned(), patrol: None, life: None };
-    let w1 = walker::Walker { name: "w1".to_owned(), patrol: Some(5), life: None };
+    let w0 = walker::Walker {
+        name: "w0".to_owned(),
+        patrol: None,
+        life: None,
+        commodities: HashMap::new()
+    };
+
+    let w1 = walker::Walker {
+        name: "w1".to_owned(),
+        patrol: Some(5),
+        life: None,
+        commodities: HashMap::new()
+    };
 
     g.add((0, 0), Entity::Doodad { data: d0 });
     g.add((1, 0), Entity::Doodad { data: d1 });
     g.add((2, 0), Entity::Resource { data: r0 });
     g.add((0, 1), Entity::Resource { data: r1 });
-    g.add((2, 1), Entity::Structure { data: s0 });
-    g.add((0, 2), Entity::Structure { data: s1 });
-    g.add((1, 2), Entity::Walker { data: w0 });
-    g.add((2, 2), Entity::Walker { data: w1 });
+    g.add((2, 1), Entity::Structure { id: Uuid::new_v4(), data: s0 });
+    g.add((0, 2), Entity::Structure { id: Uuid::new_v4(), data: s1 });
+    g.add((1, 2), Entity::Walker { id: Uuid::new_v4(), data: w0 });
+    g.add((2, 2), Entity::Walker { id: Uuid::new_v4(), data: w1 });
 
     g
 }

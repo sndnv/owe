@@ -80,8 +80,6 @@ pub struct GridCursor {
 
 impl GridCursor {
     pub fn new(range: usize, direction: Direction, start: (usize, usize)) -> GridCursor {
-        let size = range * 2 + 1; //range in each direction (up&down / left&right) + central cell
-
         GridCursor {
             cell: start,
             direction,
@@ -123,6 +121,7 @@ impl GridCursor {
         //TODO - process resource production
         //TODO - process walker production
         //TODO - process action queue
+        //TODO - process movement
 
         let (next_cell_x, next_cell_y) = match self.direction {
             //cursor moves up and left

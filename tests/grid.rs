@@ -1,4 +1,5 @@
 extern crate owe;
+extern crate uuid;
 
 mod setup;
 
