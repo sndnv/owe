@@ -59,10 +59,40 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
         commodities: HashMap::new()
     };
 
+    let d0 = doodad::Doodad {
+        name: "d0".to_owned(),
+        is_removable: false
+    };
+
+    let d1 = doodad::Doodad {
+        name: "d1".to_owned(),
+        is_removable: true
+    };
+
+    let r0 = resource::Resource {
+        name: "r0".to_owned(),
+        level: resource::Level { current: 0, max: 10 },
+        replenish_time: Some(15)
+    };
+
+    let r1 = resource::Resource {
+        name: "r1".to_owned(),
+        level: resource::Level { current: 5, max: 10 },
+        replenish_time: None
+    };
+
     let e0 = Rc::new(Entity::Structure { id: Uuid::new_v4(), data: s0 });
     let e1 = Rc::new(Entity::Structure { id: Uuid::new_v4(), data: s1 });
     let e2 = Rc::new(Entity::Walker { id: Uuid::new_v4(), data: w0 });
     let e3 = Rc::new(Entity::Walker { id: Uuid::new_v4(), data: w1 });
+    let e4 = Rc::new(Entity::Road);
+    let e5 = Rc::new(Entity::Road);
+    let e6 = Rc::new(Entity::Roadblock);
+    let e7 = Rc::new(Entity::Roadblock);
+    let e8 = Rc::new(Entity::Doodad { data: d0 });
+    let e9 = Rc::new(Entity::Doodad { data: d1 });
+    let e10 = Rc::new(Entity::Resource { data: r0 });
+    let e11 = Rc::new(Entity::Resource { data: r1 });
 
-    vec![e0, e1, e2, e3]
+    vec![e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]
 }
