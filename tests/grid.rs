@@ -27,7 +27,7 @@ fn grid_should_not_remove_entities_not_in_cell() {
 
 #[test]
 fn grid_cursor_should_move_up() {
-    let (g, mut gc) = setup::grid::with_direction_from(Direction::Up, (2, 2));
+    let (g, mut gc) = setup::grid::grid_with_direction_from(Direction::Up, (2, 2));
 
     assert_eq!(gc.position(), (2, 2));
     gc.process_and_advance(&g);
@@ -52,7 +52,7 @@ fn grid_cursor_should_move_up() {
 
 #[test]
 fn grid_cursor_should_move_down() {
-    let (g, mut gc) = setup::grid::with_direction_from(Direction::Down, (0, 0));
+    let (g, mut gc) = setup::grid::grid_with_direction_from(Direction::Down, (0, 0));
 
     assert_eq!(gc.position(), (0, 0));
     gc.process_and_advance(&g);
@@ -77,7 +77,7 @@ fn grid_cursor_should_move_down() {
 
 #[test]
 fn grid_cursor_should_move_left() {
-    let (g, mut gc) = setup::grid::with_direction_from(Direction::Left, (2, 2));
+    let (g, mut gc) = setup::grid::grid_with_direction_from(Direction::Left, (2, 2));
 
     assert_eq!(gc.position(), (2, 2));
     gc.process_and_advance(&g);
@@ -102,7 +102,7 @@ fn grid_cursor_should_move_left() {
 
 #[test]
 fn grid_cursor_should_move_right() {
-    let (g, mut gc) = setup::grid::with_direction_from(Direction::Right, (0, 0));
+    let (g, mut gc) = setup::grid::grid_with_direction_from(Direction::Right, (0, 0));
 
     assert_eq!(gc.position(), (0, 0));
     gc.process_and_advance(&g);

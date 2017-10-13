@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Employees {
     pub required: u8,
     pub current: u8 //TODO - move to enum
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Risk { //TODO - move to enum
     pub fire: u8,
     pub damage: u8
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub enum Type {
     Housing,
     Entertainment,
@@ -25,7 +25,7 @@ pub enum Type {
     CivilService
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Structure {
     pub name: String,
     pub size: (u8, u8),

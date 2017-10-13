@@ -7,7 +7,7 @@ use owe::entities::Entity;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-pub fn default_grid() -> grid::Grid {
+pub fn grid_default() -> grid::Grid {
     let mut g = grid::Grid::new(3);
 
     let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
@@ -65,16 +65,16 @@ pub fn default_grid() -> grid::Grid {
     g
 }
 
-pub fn with_direction_from(direction: grid::Direction, from: (usize, usize)) -> (grid::Grid, grid::GridCursor) {
-    let g = default_grid();
+pub fn grid_with_direction_from(direction: grid::Direction, from: (usize, usize)) -> (grid::Grid, grid::GridCursor) {
+    let g = grid_default();
 
     let gc = grid::GridCursor::new(1, direction, from);
 
     (g, gc)
 }
 
-pub fn with_effects() -> (grid::Grid, grid::GridCursor) {
-    let g = default_grid();
+pub fn grid_with_effects() -> (grid::Grid, grid::GridCursor) {
+    let g = grid_default();
 
     //TODO - create effects
 

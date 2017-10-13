@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Walker {
     pub name: String,
     pub patrol: Option<u8>,

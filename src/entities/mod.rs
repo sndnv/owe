@@ -17,7 +17,7 @@ pub enum State {
 //TODO - * original structs become simple descriptors/props
 //TODO - * all runtime state is stored here
 //TODO - * data field -> props field that references static (?) props/descriptors
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub enum Entity {
     Road,
     Roadblock,

@@ -4,8 +4,8 @@ use entities::walker::Walker;
 
 #[derive(Debug)]
 pub struct Commodity {
-    name: String,
-    amount: u32
+    pub name: String,
+    pub amount: u32
 }
 
 //trait implemented on an entity that governs its commodity production
