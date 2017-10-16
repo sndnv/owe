@@ -13,54 +13,71 @@ pub fn grid_default() -> grid::Grid {
     let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
     let d1 = doodad::Doodad { name: "d1".to_owned(), is_removable: false };
 
-    let r0 = resource::Resource { level: resource::Level { current: 0, max: 5 }, name: "r0".to_owned(), replenish_time: Some(5) };
-    let r1 = resource::Resource { level: resource::Level { current: 3, max: 5 }, name: "r1".to_owned(), replenish_time: None };
+    let r0 = resource::ResourceProperties { max_level: 5, name: "r0".to_owned(), replenish_time: Some(5) };
+    let r1 = resource::ResourceProperties { max_level: 5, name: "r1".to_owned(), replenish_time: None };
+    let r0_state = resource::ResourceState { current_level: 0 };
+    let r1_state = resource::ResourceState { current_level: 3 };
 
-    let s0 = structure::Structure {
+    let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
         size: (1, 1),
-        employees: structure::Employees { current: 0, required: 5 },
+        max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
-        risk: structure::Risk { damage: 0, fire: 0 },
-        structure_type: structure::Type::Housing,
-        commodities: HashMap::new()
+        structure_type: structure::Type::Housing
     };
 
-    let s1 = structure::Structure {
+    let s1 = structure::StructureProperties {
         name: "s1".to_owned(),
         size: (3, 1),
-        employees: structure::Employees { current: 1, required: 2 },
+        max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
-        risk: structure::Risk { damage: 10, fire: 3 },
-        structure_type: structure::Type::Industry,
-        commodities: HashMap::new()
+        structure_type: structure::Type::Industry
     };
 
+    let s0_state = structure::StructureState {
+        current_employees: 0,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 0, fire: 0 }
+    };
 
-    let w0 = walker::Walker {
+    let s1_state = structure::StructureState {
+        current_employees: 1,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 10, fire: 3 }
+    };
+
+    let w0 = walker::WalkerProperties {
         name: "w0".to_owned(),
         patrol: None,
-        life: None,
-        commodities: HashMap::new()
+        max_life: None
     };
 
-    let w1 = walker::Walker {
+    let w1 = walker::WalkerProperties {
         name: "w1".to_owned(),
         patrol: Some(5),
-        life: None,
+        max_life: None
+    };
+
+    let w0_state = walker::WalkerState {
+        current_life: None,
         commodities: HashMap::new()
     };
 
-    g.add((0, 0), Entity::Doodad { data: d0 });
-    g.add((1, 0), Entity::Doodad { data: d1 });
-    g.add((2, 0), Entity::Resource { data: r0 });
-    g.add((0, 1), Entity::Resource { data: r1 });
-    g.add((2, 1), Entity::Structure { id: Uuid::new_v4(), data: s0 });
-    g.add((0, 2), Entity::Structure { id: Uuid::new_v4(), data: s1 });
-    g.add((1, 2), Entity::Walker { id: Uuid::new_v4(), data: w0 });
-    g.add((2, 2), Entity::Walker { id: Uuid::new_v4(), data: w1 });
+    let w1_state = walker::WalkerState {
+        current_life: None,
+        commodities: HashMap::new()
+    };
+
+    g.add((0, 0), Entity::Doodad { props: d0 });
+    g.add((1, 0), Entity::Doodad { props: d1 });
+    g.add((2, 0), Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
+    g.add((0, 1), Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
+    g.add((2, 1), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
+    g.add((0, 2), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
+    g.add((1, 2), Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
+    g.add((2, 2), Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
 
     g
 }

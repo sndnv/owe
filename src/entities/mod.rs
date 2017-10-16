@@ -13,16 +13,12 @@ pub enum State {
     Deleted
 }
 
-//TODO - Move state data from each struct into the enums
-//TODO - * original structs become simple descriptors/props
-//TODO - * all runtime state is stored here
-//TODO - * data field -> props field that references static (?) props/descriptors
 #[derive(PartialEq, Debug)]
 pub enum Entity {
     Road,
     Roadblock,
-    Doodad { data: doodad::Doodad },
-    Resource { data: resource::Resource },
-    Structure { id: Uuid, data: structure::Structure },
-    Walker { id: Uuid, data: walker::Walker }
+    Doodad { props: doodad::Doodad },
+    Resource { id: Uuid, props: resource::ResourceProperties, state: resource::ResourceState },
+    Structure { id: Uuid, props: structure::StructureProperties, state: structure::StructureState },
+    Walker { id: Uuid, props: walker::WalkerProperties, state: walker::WalkerState }
 }

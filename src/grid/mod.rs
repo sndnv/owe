@@ -1,7 +1,7 @@
 use ndarray::Array2;
 use effects::Effect;
 use entities::Entity;
-use entities::structure::Structure;
+use entities::structure::StructureProperties;
 
 #[derive(PartialEq, Debug)]
 pub enum CellState {

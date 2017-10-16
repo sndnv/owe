@@ -1,6 +1,6 @@
 pub mod exchange;
 
-use entities::walker::Walker;
+use entities::walker::WalkerProperties;
 
 #[derive(Debug)]
 pub struct Commodity {
@@ -15,5 +15,5 @@ pub trait CommodityProducer {
 
 //trait implemented on an entity that governs its walker production
 pub trait WalkerProducer {
-    fn produce_walker(&self) -> Walker;
+    fn produce_walker(&self) -> WalkerProperties;
 }

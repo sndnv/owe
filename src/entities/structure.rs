@@ -1,13 +1,7 @@
 use std::collections::HashMap;
 
 #[derive(PartialEq, Debug)]
-pub struct Employees {
-    pub required: u8,
-    pub current: u8 //TODO - move to enum
-}
-
-#[derive(PartialEq, Debug)]
-pub struct Risk { //TODO - move to enum
+pub struct Risk {
     pub fire: u8,
     pub damage: u8
 }
@@ -26,13 +20,18 @@ pub enum Type {
 }
 
 #[derive(PartialEq, Debug)]
-pub struct Structure {
+pub struct StructureProperties {
     pub name: String,
     pub size: (u8, u8),
-    pub employees: Employees,
+    pub max_employees: u8,
     pub cost: u32,
     pub desirability: (i8, i8, i8, i8, i8, i8),
-    pub risk: Risk,
-    pub commodities: HashMap<String, u32>, //TODO - move to enum
     pub structure_type: Type
+}
+
+#[derive(PartialEq, Debug)]
+pub struct StructureState {
+    pub current_employees: u8,
+    pub risk: Risk,
+    pub commodities: HashMap<String, u32>
 }

@@ -1,12 +1,11 @@
 #[derive(PartialEq, Debug)]
-pub struct Level {
-    pub max: u8,
-    pub current: u8
+pub struct ResourceProperties {
+    pub name: String,
+    pub max_level: u8,
+    pub replenish_time: Option<u16>
 }
 
 #[derive(PartialEq, Debug)]
-pub struct Resource {
-    pub name: String,
-    pub level: Level,
-    pub replenish_time: Option<u16>
+pub struct ResourceState {
+    pub current_level: u8
 }

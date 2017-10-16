@@ -22,40 +22,55 @@ pub fn commodities_default() -> Vec<Commodity> {
 }
 
 pub fn entities_default() -> Vec<Rc<Entity>> {
-    let s0 = structure::Structure {
+    let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
         size: (1, 1),
-        employees: structure::Employees { current: 0, required: 5 },
+        max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
-        risk: structure::Risk { damage: 0, fire: 0 },
-        structure_type: structure::Type::Housing,
-        commodities: HashMap::new()
+        structure_type: structure::Type::Housing
     };
 
-    let s1 = structure::Structure {
+    let s1 = structure::StructureProperties {
         name: "s1".to_owned(),
         size: (3, 1),
-        employees: structure::Employees { current: 1, required: 2 },
+        max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
-        risk: structure::Risk { damage: 10, fire: 3 },
-        structure_type: structure::Type::Industry,
-        commodities: HashMap::new()
+        structure_type: structure::Type::Industry
     };
 
+    let s0_state = structure::StructureState {
+        current_employees: 0,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 0, fire: 0 }
+    };
 
-    let w0 = walker::Walker {
+    let s1_state = structure::StructureState {
+        current_employees: 1,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 10, fire: 3 }
+    };
+
+    let w0 = walker::WalkerProperties {
         name: "w0".to_owned(),
         patrol: None,
-        life: None,
+        max_life: None
+    };
+
+    let w1 = walker::WalkerProperties {
+        name: "w1".to_owned(),
+        patrol: Some(5),
+        max_life: None
+    };
+
+    let w0_state = walker::WalkerState {
+        current_life: None,
         commodities: HashMap::new()
     };
 
-    let w1 = walker::Walker {
-        name: "w1".to_owned(),
-        patrol: Some(5),
-        life: None,
+    let w1_state = walker::WalkerState {
+        current_life: None,
         commodities: HashMap::new()
     };
 
@@ -69,30 +84,34 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
         is_removable: true
     };
 
-    let r0 = resource::Resource {
+    let r0 = resource::ResourceProperties {
         name: "r0".to_owned(),
-        level: resource::Level { current: 0, max: 10 },
+        max_level: 10,
         replenish_time: Some(15)
     };
 
-    let r1 = resource::Resource {
+    let r1 = resource::ResourceProperties {
         name: "r1".to_owned(),
-        level: resource::Level { current: 5, max: 10 },
+        max_level: 10,
         replenish_time: None
     };
 
-    let e0 = Rc::new(Entity::Structure { id: Uuid::new_v4(), data: s0 });
-    let e1 = Rc::new(Entity::Structure { id: Uuid::new_v4(), data: s1 });
-    let e2 = Rc::new(Entity::Walker { id: Uuid::new_v4(), data: w0 });
-    let e3 = Rc::new(Entity::Walker { id: Uuid::new_v4(), data: w1 });
+    let r0_state = resource::ResourceState { current_level: 0 };
+
+    let r1_state = resource::ResourceState { current_level: 5 };
+
+    let e0 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
+    let e1 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
+    let e2 = Rc::new(Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
+    let e3 = Rc::new(Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
     let e4 = Rc::new(Entity::Road);
     let e5 = Rc::new(Entity::Road);
     let e6 = Rc::new(Entity::Roadblock);
     let e7 = Rc::new(Entity::Roadblock);
-    let e8 = Rc::new(Entity::Doodad { data: d0 });
-    let e9 = Rc::new(Entity::Doodad { data: d1 });
-    let e10 = Rc::new(Entity::Resource { data: r0 });
-    let e11 = Rc::new(Entity::Resource { data: r1 });
+    let e8 = Rc::new(Entity::Doodad { props: d0 });
+    let e9 = Rc::new(Entity::Doodad { props: d1 });
+    let e10 = Rc::new(Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
+    let e11 = Rc::new(Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
 
     vec![e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]
 }

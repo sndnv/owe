@@ -13,10 +13,10 @@ fn sort_entities(entities: &Vec<Rc<Entity>>) -> Vec<Rc<Entity>> {
 
     result.sort_by_key(|&ref e| -> String {
         match *e.clone() {
-            Entity::Structure { ref data, .. } => &data.name,
-            Entity::Walker { ref data, .. } => &data.name,
-            Entity::Resource { ref data, .. } => &data.name,
-            Entity::Doodad { ref data, .. } => &data.name,
+            Entity::Structure { ref props, .. } => &props.name,
+            Entity::Walker { ref props, .. } => &props.name,
+            Entity::Resource { ref props, .. } => &props.name,
+            Entity::Doodad { ref props, .. } => &props.name,
             _ => "none"
         }.to_owned()
     });

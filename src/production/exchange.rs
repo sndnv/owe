@@ -42,6 +42,7 @@ impl CommodityExchange {
 
     fn do_update(entity_map: &mut EntityStatsMap, entity: Rc<Entity>, commodity: &Commodity) -> () {
         let entity_id = match *entity {
+            //TODO - support Entity::Resource as producer (?)
             Entity::Structure { id, .. } => id,
             Entity::Walker { id, .. } => id,
             ref other => panic!("Unexpected entity supplied for state update: [{:?}]", other)
@@ -121,6 +122,7 @@ impl CommodityExchange {
     //adds a new commodity producer to the exchange; removal is not needed
     pub fn add_producer(&mut self, producer: Rc<Entity>, commodity: &str) -> () {
         let producer_id = match *producer {
+            //TODO - support Entity::Resource as producer (?)
             Entity::Structure { id, .. } => id,
             ref other => panic!("Unexpected entity supplied: [{:?}]", other)
         };
