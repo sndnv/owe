@@ -20,9 +20,15 @@ pub enum Type {
 }
 
 #[derive(PartialEq, Debug)]
+pub struct Size {
+    pub width: u8,
+    pub height: u8
+}
+
+#[derive(PartialEq, Debug)]
 pub struct StructureProperties {
     pub name: String,
-    pub size: (u8, u8),
+    pub size: Size,
     pub max_employees: u8,
     pub cost: u32,
     pub desirability: (i8, i8, i8, i8, i8, i8),

@@ -166,7 +166,7 @@ fn exchange_should_not_add_walker_as_consumer() {
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "Producer already added")]
 fn exchange_should_not_add_duplicate_producers() {
     let mut exchange = setup::production::exchange_default();
     let commodities = setup::production::commodities_default();
@@ -181,7 +181,7 @@ fn exchange_should_not_add_duplicate_producers() {
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "Consumer already added")]
 fn exchange_should_not_add_duplicate_consumers() {
     let mut exchange = setup::production::exchange_default();
     let commodities = setup::production::commodities_default();

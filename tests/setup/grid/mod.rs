@@ -26,7 +26,7 @@ pub fn grid_default() -> grid::Grid {
 
     let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
-        size: (1, 1),
+        size: structure::Size { width: 1, height: 1},
         max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
@@ -35,7 +35,7 @@ pub fn grid_default() -> grid::Grid {
 
     let s1 = structure::StructureProperties {
         name: "s1".to_owned(),
-        size: (1, 1),
+        size: structure::Size { width: 1, height: 1},
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
@@ -104,7 +104,7 @@ pub fn grid_large() -> grid::Grid {
 
     let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
-        size: (1, 1),
+        size: structure::Size { width: 1, height: 1},
         max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
@@ -113,7 +113,7 @@ pub fn grid_large() -> grid::Grid {
 
     let s1 = structure::StructureProperties {
         name: "s1".to_owned(),
-        size: (1, 1),
+        size: structure::Size { width: 1, height: 1},
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
@@ -122,7 +122,7 @@ pub fn grid_large() -> grid::Grid {
 
     let s2 = structure::StructureProperties {
         name: "s2".to_owned(),
-        size: (1, 1),
+        size: structure::Size { width: 1, height: 1},
         max_employees: 10,
         cost: 500,
         desirability: (1, 2, 3, 4, 5, 6),
@@ -131,7 +131,7 @@ pub fn grid_large() -> grid::Grid {
 
     let s3 = structure::StructureProperties {
         name: "s3".to_owned(),
-        size: (1, 1),
+        size: structure::Size { width: 1, height: 1},
         max_employees: 1,
         cost: 1,
         desirability: (1, 2, 3, 4, 5, 6),

@@ -3,7 +3,9 @@ extern crate uuid;
 
 mod setup;
 
-use owe::grid::Direction;
+use owe::entities::Entity;
+use owe::entities::doodad;
+use owe::grid::{Direction, CellState};
 
 fn sort_cells(cells: &Vec<(usize, usize)>) -> Vec<(usize, usize)> {
     let mut result = cells.clone();
@@ -13,7 +15,27 @@ fn sort_cells(cells: &Vec<(usize, usize)>) -> Vec<(usize, usize)> {
 
 #[test]
 fn grid_should_add_entities() {
-    //TODO - implement
+    let mut g = setup::grid::grid_empty();
+
+    let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
+    let d1 = doodad::Doodad { name: "d1".to_owned(), is_removable: false };
+    let d2 = doodad::Doodad { name: "d2".to_owned(), is_removable: false };
+
+    assert_eq!(g.add((0, 0), Entity::Doodad { props: d0 }), (CellState::Empty, true));
+    assert_eq!(g.add((1, 1), Entity::Doodad { props: d1 }), (CellState::Empty, true));
+    assert_eq!(g.add((2, 2), Entity::Doodad { props: d2 }), (CellState::Empty, true));
+
+    assert_eq!(g.cell_state((0, 0)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 0)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 0)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 1)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 1)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 1)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 2)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 2)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 2)), CellState::Occupied);
 }
 
 #[test]
@@ -22,13 +44,60 @@ fn grid_should_not_add_overlapping_entities() {
 }
 
 #[test]
+#[should_panic(expected = "is not in grid")]
+fn grid_should_not_add_entities_outside_of_bounds() {
+    let mut g = setup::grid::grid_default();
+
+    let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
+
+    g.add((12, 37), Entity::Doodad { props: d0 });
+}
+
+#[test]
 fn grid_should_remove_entities_from_cell() {
-    //TODO - implement
+    let mut g = setup::grid::grid_default();
+
+    assert_eq!(g.cell_state((0, 0)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 0)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 0)), CellState::Occupied);
+
+    assert_eq!(g.cell_state((0, 1)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 1)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 1)), CellState::Occupied);
+
+    assert_eq!(g.cell_state((0, 2)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 2)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 2)), CellState::Occupied);
+
+    assert_eq!(g.remove((0, 1)), (CellState::Occupied, true));
+    assert_eq!(g.remove((1, 2)), (CellState::Occupied, true));
+    assert_eq!(g.remove((2, 1)), (CellState::Occupied, true));
+    assert_eq!(g.remove((1, 0)), (CellState::Occupied, true));
+
+    assert_eq!(g.cell_state((0, 0)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 0)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 0)), CellState::Occupied);
+
+    assert_eq!(g.cell_state((0, 1)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 1)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 1)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 2)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 2)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 2)), CellState::Occupied);
 }
 
 #[test]
 fn grid_should_not_remove_entities_not_in_cell() {
     //TODO - implement
+}
+
+#[test]
+#[should_panic(expected = "is not in grid")]
+fn grid_should_not_remove_entities_outside_of_bounds() {
+    let mut g = setup::grid::grid_default();
+
+    g.remove((12, 37));
 }
 
 #[test]

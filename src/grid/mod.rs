@@ -1,6 +1,7 @@
 use ndarray::Array2;
 use pathfinding::dijkstra;
 use entities::Entity;
+use entities::structure;
 
 #[derive(PartialEq, Debug)]
 pub enum CellState {
@@ -41,23 +42,65 @@ impl Grid {
         }
     }
 
-    //returns previous cell state
-    fn update(&mut self, at: (usize, usize), with_entity: Option<Entity>) -> CellState {
-        let cell_state = self.cell_state(at);
+    fn entity_cells(entity_size: &structure::Size, cell: (usize, usize)) -> Vec<(usize, usize)> {
+        let cells: Vec<Vec<(usize, usize)>> = (cell.0..(cell.0 + entity_size.width as usize))
+            .map(|x| {
+                (cell.1..(cell.1 + entity_size.height as usize)).map(|y| {
+                    (x, y)
+                }).collect()
+            }).collect();
 
-        if cell_state != CellState::OutOfBounds {
-            self.cells[at] = with_entity;
+        cells.into_iter().fold(vec![], |mut acc, vec| {
+            acc.extend(vec);
+            acc
+        })
+    }
+
+    pub fn add(&mut self, at: (usize, usize), entity: Entity) -> (CellState, bool) {
+        match self.cell_state(at) {
+            CellState::Empty => {
+                //TODO - handle overlapping entities
+                match entity {
+                    Entity::Structure { ref props, .. } if props.size.width * props.size.height > 1 => {
+                        //TODO - check if all cells are in grid
+                        //TODO - check if all cells are empty
+                        (CellState::Empty, true) //TODO
+                    }
+
+                    _ => {
+                        self.cells[at] = Some(entity);
+                        (CellState::Empty, true)
+                    }
+                }
+            }
+
+            CellState::Occupied => {
+                (CellState::Occupied, false)
+            }
+
+            CellState::OutOfBounds => {
+                panic!("Cell [{:?}] is not in grid [{:?}; {:?}]", at, self.width, self.height)
+            }
         }
-
-        cell_state
     }
 
-    pub fn add(&mut self, at: (usize, usize), entity: Entity) -> CellState {
-        self.update(at, Some(entity))
-    }
+    pub fn remove(&mut self, at: (usize, usize)) -> (CellState, bool) {
+        match self.cell_state(at) {
+            CellState::Empty => {
+                (CellState::Empty, false)
+            }
 
-    pub fn remove(&mut self, at: (usize, usize)) -> CellState {
-        self.update(at, None)
+            CellState::Occupied => {
+                //TODO - handle entities with size > (1, 1)
+                //TODO - handle overlapping entities
+                self.cells[at] = None;
+                (CellState::Occupied, true)
+            }
+
+            CellState::OutOfBounds => {
+                panic!("Cell [{:?}] is not in grid [{:?}; {:?}]", at, self.width, self.height)
+            }
+        }
     }
 
     pub fn cell_state(&self, at: (usize, usize)) -> CellState {
@@ -67,6 +110,7 @@ impl Grid {
                     &Some(_) => CellState::Occupied,
                     &None => CellState::Empty
                 },
+
             None => CellState::OutOfBounds
         }
     }

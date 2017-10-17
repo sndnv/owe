@@ -24,7 +24,7 @@ pub fn commodities_default() -> Vec<Commodity> {
 pub fn entities_default() -> Vec<Rc<Entity>> {
     let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
-        size: (1, 1),
+        size: structure::Size { width: 1, height: 1},
         max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
@@ -33,7 +33,7 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
 
     let s1 = structure::StructureProperties {
         name: "s1".to_owned(),
-        size: (3, 1),
+        size: structure::Size { width: 3, height: 1},
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
