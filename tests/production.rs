@@ -3,7 +3,7 @@ extern crate uuid;
 
 mod setup;
 
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 use owe::entities::Entity;
 use owe::production::Commodity;
 use owe::production::exchange::CommodityState;
@@ -170,7 +170,7 @@ fn exchange_should_not_add_walker_as_consumer() {
 fn exchange_should_not_add_duplicate_producers() {
     let mut exchange = setup::production::exchange_default();
     let commodities = setup::production::commodities_default();
-    let mut entities = setup::production::entities_default();
+    let entities = setup::production::entities_default();
 
     assert!(exchange.producers_of(&commodities[0].name).is_empty());
     assert!(exchange.producers_of(&commodities[1].name).is_empty());
@@ -185,7 +185,7 @@ fn exchange_should_not_add_duplicate_producers() {
 fn exchange_should_not_add_duplicate_consumers() {
     let mut exchange = setup::production::exchange_default();
     let commodities = setup::production::commodities_default();
-    let mut entities = setup::production::entities_default();
+    let entities = setup::production::entities_default();
 
     assert!(exchange.consumers_of(&commodities[0].name).is_empty());
     assert!(exchange.consumers_of(&commodities[1].name).is_empty());

@@ -1,7 +1,6 @@
 use ndarray::Array2;
-use effects::Effect;
+use pathfinding::dijkstra;
 use entities::Entity;
-use entities::structure::StructureProperties;
 
 #[derive(PartialEq, Debug)]
 pub enum CellState {
@@ -16,6 +15,13 @@ pub enum Direction {
     Down,
     Left,
     Right
+}
+
+#[derive(Debug)]
+pub enum TraversalType {
+    RoadOnly,
+    EmptyOnly,
+    RoadOrEmpty
 }
 
 #[derive(Debug)]
@@ -36,11 +42,11 @@ impl Grid {
     }
 
     //returns previous cell state
-    fn update(&mut self, at: (usize, usize), with_cell: Option<Entity>) -> CellState {
+    fn update(&mut self, at: (usize, usize), with_entity: Option<Entity>) -> CellState {
         let cell_state = self.cell_state(at);
 
         if cell_state != CellState::OutOfBounds {
-            self.cells[at] = with_cell;
+            self.cells[at] = with_entity;
         }
 
         cell_state
@@ -66,21 +72,71 @@ impl Grid {
     }
 
     pub fn foreach(&self, f: &Fn((usize, usize), &Option<Entity>)) -> () {
-        for ((x, y), cell) in self.cells.indexed_iter() {
-            f((x, y), cell)
+        for ((x, y), entity) in self.cells.indexed_iter() {
+            f((x, y), entity)
+        }
+    }
+
+    pub fn is_cell_in_grid(&self, cell: (usize, usize)) -> bool {
+        self.width > cell.0 && self.height > cell.1
+    }
+
+    pub fn is_cell_passable(&self, cell: (usize, usize)) -> bool {
+        self.is_cell_in_grid(cell) && match self.cells[cell] {
+            Some(ref entity) => match entity {
+                &Entity::Road => true,
+                &Entity::Roadblock => true,
+                &Entity::Walker { .. } => true,
+                _ => false
+            },
+            None => true //cell is empty
+        }
+    }
+
+    pub fn neighbors_of(&self, cell: (usize, usize)) -> Vec<(usize, usize)> {
+        let (x, y) = cell;
+
+        //TODO - allow corner neighbors only for specific walkers that don't need roads
+        let neighbors = vec![
+            if x > 0 { Some((x - 1, y + 1)) } else { None },
+            Some((x, y + 1)),
+            Some((x + 1, y + 1)),
+            if x > 0 { Some((x - 1, y)) } else { None },
+            Some((x + 1, y)),
+            if x > 0 && y > 0 { Some((x - 1, y - 1)) } else { None },
+            if y > 0 { Some((x, y - 1)) } else { None },
+            if y > 0 { Some((x + 1, y - 1)) } else { None }
+        ];
+
+        neighbors.into_iter()
+            .filter(|opt| opt.map_or(false, |c| self.is_cell_passable(c)))
+            .map(|opt| opt.unwrap())
+            .collect()
+    }
+
+    pub fn path_between(&self, start: (usize, usize), end: (usize, usize)) -> Option<(Vec<(usize, usize)>, usize)> {
+        if self.is_cell_in_grid(start) && self.is_cell_in_grid(end) {
+            dijkstra(
+                &start,
+                |cell| self.neighbors_of(*cell).into_iter().map(|c| (c, 1)),
+                |cell| *cell == end
+            )
+        } else {
+            None
         }
     }
 }
 
-pub struct GridCursor {
+#[derive(Debug)]
+pub struct Cursor {
     cell: (usize, usize),
     direction: Direction,
     range: usize
 }
 
-impl GridCursor {
-    pub fn new(range: usize, direction: Direction, start: (usize, usize)) -> GridCursor {
-        GridCursor {
+impl Cursor {
+    pub fn new(range: usize, direction: Direction, start: (usize, usize)) -> Cursor {
+        Cursor {
             cell: start,
             direction,
             range
@@ -88,7 +144,109 @@ impl GridCursor {
     }
 
     pub fn position(&self) -> (usize, usize) {
-        self.cell
+        (self.cell.0, self.cell.1)
+    }
+
+    fn calculate_next_cell(cell_x: isize, cell_y: isize, grid_width: isize, grid_height: isize, direction: &Direction) -> (usize, usize) {
+        let (next_cell_x, next_cell_y) = match direction {
+            //cursor moves up and left
+            &Direction::Up => {
+                if cell_y == 0 {
+                    //reached top row
+                    (
+                        if cell_x == 0 {
+                            //reached left-most col
+                            grid_width - 1
+                        } else {
+                            //moves one col to the left
+                            cell_x - 1
+                        },
+                        //resets to bottom row
+                        grid_height - 1
+                    )
+                } else {
+                    //moves one row up
+                    (
+                        cell_x,
+                        cell_y - 1
+                    )
+                }
+            }
+
+            //cursor moves down and right
+            &Direction::Down => {
+                if cell_y + 1 == grid_height {
+                    //reached bottom row
+                    (
+                        if cell_x + 1 == grid_width {
+                            //reached right-most col
+                            0
+                        } else {
+                            //moves one col to the right
+                            cell_x + 1
+                        },
+                        //resets to top row
+                        0
+                    )
+                } else {
+                    //moves one row down
+                    (
+                        cell_x,
+                        cell_y + 1
+                    )
+                }
+            }
+
+            //cursor moves left and up
+            &Direction::Left => {
+                if cell_x == 0 {
+                    //reached left-most col
+                    (
+                        //resets to last col
+                        grid_width - 1,
+                        if cell_y == 0 {
+                            //reached top row
+                            grid_height - 1
+                        } else {
+                            //moves one row up
+                            cell_y - 1
+                        }
+                    )
+                } else {
+                    //moves one col to the left on the current row
+                    (
+                        cell_x - 1,
+                        cell_y
+                    )
+                }
+            }
+
+            //cursor moves right & down
+            &Direction::Right => {
+                if cell_x + 1 == grid_width {
+                    //reached right-most col
+                    (
+                        //resets to first col
+                        0,
+                        if cell_y + 1 == grid_height {
+                            //reached bottom row
+                            0
+                        } else {
+                            //moves one row down
+                            cell_y + 1
+                        }
+                    )
+                } else {
+                    //moves one col to the right on the current row
+                    (
+                        cell_x + 1,
+                        cell_y
+                    )
+                }
+            }
+        };
+
+        (next_cell_x as usize, next_cell_y as usize)
     }
 
     //processes all effects for the current cell and moves to the next cell in the grid
@@ -123,105 +281,7 @@ impl GridCursor {
         //TODO - process action queue
         //TODO - process movement
 
-        let (next_cell_x, next_cell_y) = match self.direction {
-            //cursor moves up and left
-            Direction::Up => {
-                if cell_y == 0 {
-                    //reached top row
-                    (
-                        if cell_x == 0 {
-                            //reached left-most col
-                            grid_width - 1
-                        } else {
-                            //moves one col to the left
-                            cell_x - 1
-                        },
-                        //resets to bottom row
-                        grid_height - 1
-                    )
-                } else {
-                    //moves one row up
-                    (
-                        cell_x,
-                        cell_y - 1
-                    )
-                }
-            }
-
-            //cursor moves down and right
-            Direction::Down => {
-                if cell_y + 1 == grid_height {
-                    //reached bottom row
-                    (
-                        if cell_x + 1 == grid_width {
-                            //reached right-most col
-                            0
-                        } else {
-                            //moves one col to the right
-                            cell_x + 1
-                        },
-                        //resets to top row
-                        0
-                    )
-                } else {
-                    //moves one row down
-                    (
-                        cell_x,
-                        cell_y + 1
-                    )
-                }
-            }
-
-            //cursor moves left and up
-            Direction::Left => {
-                if cell_x == 0 {
-                    //reached left-most col
-                    (
-                        //resets to last col
-                        grid_width - 1,
-                        if cell_y == 0 {
-                            //reached top row
-                            grid_height - 1
-                        } else {
-                            //moves one row up
-                            cell_y - 1
-                        }
-                    )
-                } else {
-                    //moves one col to the left on the current row
-                    (
-                        cell_x - 1,
-                        cell_y
-                    )
-                }
-            }
-
-            //cursor moves right & down
-            Direction::Right => {
-                if cell_x + 1 == grid_width {
-                    //reached right-most col
-                    (
-                        //resets to first col
-                        0,
-                        if cell_y + 1 == grid_height {
-                            //reached bottom row
-                            0
-                        } else {
-                            //moves one row down
-                            cell_y + 1
-                        }
-                    )
-                } else {
-                    //moves one col to the right on the current row
-                    (
-                        cell_x + 1,
-                        cell_y
-                    )
-                }
-            }
-        };
-
         //resets the cursor position
-        self.cell = (next_cell_x as usize, next_cell_y as usize);
+        self.cell = Self::calculate_next_cell(cell_x, cell_y, grid_width, grid_height, &self.direction);
     }
 }

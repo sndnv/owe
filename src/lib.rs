@@ -1,6 +1,7 @@
 #[macro_use(s)]
 extern crate ndarray;
 extern crate uuid;
+extern crate pathfinding;
 
 pub mod grid;
 pub mod effects;

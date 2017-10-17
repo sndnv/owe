@@ -18,7 +18,7 @@ impl effects::Effect for TestEffect1 {
             &mut Entity::Doodad { ref mut props } => {
                 props.name = "updated doodad name".to_owned();
             }
-            _ => ()//does nothing
+            _ => () //does nothing
         }
     }
 }
@@ -31,9 +31,8 @@ impl effects::Effect for TestEffect2 {
                 if state.risk.damage > 0 {
                     state.risk.damage -= 1;
                 }
-
             }
-            _ => ()//does nothing
+            _ => () //does nothing
         }
     }
 }
@@ -52,7 +51,7 @@ impl effects::Effect for TestEffect3 {
                     None => state.current_life = props.max_life
                 };
             }
-            _ => ()//does nothing
+            _ => () //does nothing
         }
     }
 }

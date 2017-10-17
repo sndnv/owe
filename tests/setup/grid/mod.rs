@@ -7,6 +7,12 @@ use owe::entities::Entity;
 use std::collections::HashMap;
 use uuid::Uuid;
 
+pub fn grid_empty() -> grid::Grid {
+    let g = grid::Grid::new(3);
+
+    g
+}
+
 pub fn grid_default() -> grid::Grid {
     let mut g = grid::Grid::new(3);
 
@@ -29,7 +35,7 @@ pub fn grid_default() -> grid::Grid {
 
     let s1 = structure::StructureProperties {
         name: "s1".to_owned(),
-        size: (3, 1),
+        size: (1, 1),
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
@@ -82,20 +88,135 @@ pub fn grid_default() -> grid::Grid {
     g
 }
 
-pub fn grid_with_direction_from(direction: grid::Direction, from: (usize, usize)) -> (grid::Grid, grid::GridCursor) {
+pub fn grid_large() -> grid::Grid {
+    let mut g = grid::Grid::new(5);
+
+    let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
+    let d1 = doodad::Doodad { name: "d1".to_owned(), is_removable: false };
+    let d2 = doodad::Doodad { name: "d2".to_owned(), is_removable: false };
+
+    let r0 = resource::ResourceProperties { max_level: 5, name: "r0".to_owned(), replenish_time: Some(5) };
+    let r1 = resource::ResourceProperties { max_level: 5, name: "r1".to_owned(), replenish_time: None };
+    let r2 = resource::ResourceProperties { max_level: 10, name: "r2".to_owned(), replenish_time: Some(1) };
+    let r0_state = resource::ResourceState { current_level: 0 };
+    let r1_state = resource::ResourceState { current_level: 3 };
+    let r2_state = resource::ResourceState { current_level: 10 };
+
+    let s0 = structure::StructureProperties {
+        name: "s0".to_owned(),
+        size: (1, 1),
+        max_employees: 5,
+        cost: 1000,
+        desirability: (0, 0, 0, 0, 0, 0),
+        structure_type: structure::Type::Housing
+    };
+
+    let s1 = structure::StructureProperties {
+        name: "s1".to_owned(),
+        size: (1, 1),
+        max_employees: 2,
+        cost: 5000,
+        desirability: (1, 2, 3, 4, 5, 6),
+        structure_type: structure::Type::Industry
+    };
+
+    let s2 = structure::StructureProperties {
+        name: "s2".to_owned(),
+        size: (1, 1),
+        max_employees: 10,
+        cost: 500,
+        desirability: (1, 2, 3, 4, 5, 6),
+        structure_type: structure::Type::CivilService
+    };
+
+    let s3 = structure::StructureProperties {
+        name: "s3".to_owned(),
+        size: (1, 1),
+        max_employees: 1,
+        cost: 1,
+        desirability: (1, 2, 3, 4, 5, 6),
+        structure_type: structure::Type::Religion
+    };
+
+    let s0_state = structure::StructureState {
+        current_employees: 0,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 0, fire: 0 }
+    };
+
+    let s1_state = structure::StructureState {
+        current_employees: 1,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 10, fire: 3 }
+    };
+
+    let s2_state = structure::StructureState {
+        current_employees: 1,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 1, fire: 1 }
+    };
+
+    let s3_state = structure::StructureState {
+        current_employees: 1,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 10, fire: 10 }
+    };
+
+    let w0 = walker::WalkerProperties {
+        name: "w0".to_owned(),
+        patrol: None,
+        max_life: None
+    };
+
+    let w1 = walker::WalkerProperties {
+        name: "w1".to_owned(),
+        patrol: Some(5),
+        max_life: None
+    };
+
+    let w0_state = walker::WalkerState {
+        current_life: None,
+        commodities: HashMap::new()
+    };
+
+    let w1_state = walker::WalkerState {
+        current_life: None,
+        commodities: HashMap::new()
+    };
+
+    g.add((1, 0), Entity::Doodad { props: d0 });
+    g.add((2, 3), Entity::Doodad { props: d1 });
+    g.add((3, 3), Entity::Doodad { props: d2 });
+
+    g.add((0, 3), Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
+    g.add((0, 4), Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
+    g.add((1, 4), Entity::Resource { id: Uuid::new_v4(), props: r2, state: r2_state });
+
+    g.add((2, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
+    g.add((2, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
+    g.add((2, 2), Entity::Structure { id: Uuid::new_v4(), props: s2, state: s2_state });
+    g.add((4, 1), Entity::Structure { id: Uuid::new_v4(), props: s3, state: s3_state });
+
+    g.add((0, 2), Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
+    g.add((4, 4), Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
+
+    g
+}
+
+pub fn grid_with_direction_from(direction: grid::Direction, from: (usize, usize)) -> (grid::Grid, grid::Cursor) {
     let g = grid_default();
 
-    let gc = grid::GridCursor::new(1, direction, from);
+    let gc = grid::Cursor::new(1, direction, from);
 
     (g, gc)
 }
 
-pub fn grid_with_effects() -> (grid::Grid, grid::GridCursor) {
+pub fn grid_with_effects() -> (grid::Grid, grid::Cursor) {
     let g = grid_default();
 
     //TODO - create effects
 
-    let gc = grid::GridCursor::new(1, grid::Direction::Right, (0, 0));
+    let gc = grid::Cursor::new(1, grid::Direction::Right, (0, 0));
 
     (g, gc)
 }

@@ -65,7 +65,7 @@ impl CommodityExchange {
             .retain(|_, v| v.0.upgrade().is_some())
     }
 
-    pub fn collect_entities(entity_map: &EntityStatsMap, commodity: &str) -> Vec<Rc<Entity>> {
+    fn collect_entities(entity_map: &EntityStatsMap, commodity: &str) -> Vec<Rc<Entity>> {
         entity_map
             .get(commodity)
             .map_or_else(

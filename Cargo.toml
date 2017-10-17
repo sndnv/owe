@@ -6,6 +6,7 @@ authors = ["sndnv"]
 [dependencies]
 ndarray = "0.10.0"
 uuid = { version = "0.5", features = ["v4"] }
+pathfinding = "0.2"
 
 [lib]
 name = "owe"
