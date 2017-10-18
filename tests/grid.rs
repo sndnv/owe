@@ -3,8 +3,10 @@ extern crate uuid;
 
 mod setup;
 
+use uuid::Uuid;
+use std::collections::HashMap;
 use owe::entities::Entity;
-use owe::entities::doodad;
+use owe::entities::{ doodad, structure };
 use owe::grid::{Direction, CellState};
 
 fn sort_cells(cells: &Vec<(usize, usize)>) -> Vec<(usize, usize)> {
@@ -36,21 +38,6 @@ fn grid_should_add_entities() {
     assert_eq!(g.cell_state((0, 2)), CellState::Empty);
     assert_eq!(g.cell_state((1, 2)), CellState::Empty);
     assert_eq!(g.cell_state((2, 2)), CellState::Occupied);
-}
-
-#[test]
-fn grid_should_not_add_overlapping_entities() {
-    //TODO - implement
-}
-
-#[test]
-#[should_panic(expected = "is not in grid")]
-fn grid_should_not_add_entities_outside_of_bounds() {
-    let mut g = setup::grid::grid_default();
-
-    let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
-
-    g.add((12, 37), Entity::Doodad { props: d0 });
 }
 
 #[test]
@@ -88,8 +75,195 @@ fn grid_should_remove_entities_from_cell() {
 }
 
 #[test]
+fn grid_should_not_add_overlapping_entities() {
+    let mut g = setup::grid::grid_empty();
+
+    let s0 = structure::StructureProperties {
+        name: "s0".to_owned(),
+        size: structure::Size { width: 2, height: 3 },
+        max_employees: 5,
+        cost: 1000,
+        desirability: (0, 0, 0, 0, 0, 0),
+        structure_type: structure::Type::Housing
+    };
+
+    let s1 = structure::StructureProperties {
+        name: "s1".to_owned(),
+        size: structure::Size { width: 2, height: 2 },
+        max_employees: 2,
+        cost: 5000,
+        desirability: (1, 2, 3, 4, 5, 6),
+        structure_type: structure::Type::Industry
+    };
+
+    let s0_state = structure::StructureState {
+        current_employees: 0,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 0, fire: 0 }
+    };
+
+    let s1_state = structure::StructureState {
+        current_employees: 1,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 10, fire: 3 }
+    };
+
+    assert_eq!(
+        g.add((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state }),
+        (CellState::Empty, true)
+    );
+
+    assert_eq!(g.cell_state((0, 0)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 0)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 0)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 1)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 1)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 1)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 2)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 2)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 2)), CellState::Empty);
+
+    assert_eq!(
+        g.add((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
+        (CellState::Occupied, false)
+    );
+}
+
+#[test]
+fn grid_should_remove_entities_from_all_cells_they_use() {
+    let mut g = setup::grid::grid_empty();
+
+    let s0 = structure::StructureProperties {
+        name: "s0".to_owned(),
+        size: structure::Size { width: 2, height: 3 },
+        max_employees: 5,
+        cost: 1000,
+        desirability: (0, 0, 0, 0, 0, 0),
+        structure_type: structure::Type::Housing
+    };
+
+    let s1 = structure::StructureProperties {
+        name: "s1".to_owned(),
+        size: structure::Size { width: 2, height: 2 },
+        max_employees: 2,
+        cost: 5000,
+        desirability: (1, 2, 3, 4, 5, 6),
+        structure_type: structure::Type::Industry
+    };
+
+    let s0_state = structure::StructureState {
+        current_employees: 0,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 0, fire: 0 }
+    };
+
+    let s1_state = structure::StructureState {
+        current_employees: 1,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 10, fire: 3 }
+    };
+
+    assert_eq!(
+        g.add((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state }),
+        (CellState::Empty, true)
+    );
+
+    assert_eq!(g.cell_state((0, 0)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 0)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 0)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 1)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 1)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 1)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 2)), CellState::Occupied);
+    assert_eq!(g.cell_state((1, 2)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 2)), CellState::Empty);
+
+    assert_eq!(
+        g.add((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
+        (CellState::Occupied, false)
+    );
+
+    assert_eq!(g.remove((0, 1)), (CellState::Occupied, true));
+
+    assert_eq!(g.cell_state((0, 0)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 0)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 0)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 1)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 1)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 1)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 2)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 2)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 2)), CellState::Empty);
+
+    let s1_new = structure::StructureProperties {
+        name: "s1".to_owned(),
+        size: structure::Size { width: 2, height: 2 },
+        max_employees: 2,
+        cost: 5000,
+        desirability: (1, 2, 3, 4, 5, 6),
+        structure_type: structure::Type::Industry
+    };
+
+    let s1_new_state = structure::StructureState {
+        current_employees: 1,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 10, fire: 3 }
+    };
+
+    assert_eq!(
+        g.add((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1_new, state: s1_new_state }),
+        (CellState::Empty, true)
+    );
+
+    assert_eq!(g.cell_state((0, 0)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 0)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 0)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 1)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 1)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 1)), CellState::Occupied);
+
+    assert_eq!(g.cell_state((0, 2)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 2)), CellState::Occupied);
+    assert_eq!(g.cell_state((2, 2)), CellState::Occupied);
+}
+
+#[test]
 fn grid_should_not_remove_entities_not_in_cell() {
-    //TODO - implement
+    let mut g = setup::grid::grid_empty();
+
+    assert_eq!(g.cell_state((0, 0)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 0)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 0)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 1)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 1)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 1)), CellState::Empty);
+
+    assert_eq!(g.cell_state((0, 2)), CellState::Empty);
+    assert_eq!(g.cell_state((1, 2)), CellState::Empty);
+    assert_eq!(g.cell_state((2, 2)), CellState::Empty);
+
+    assert_eq!(g.remove((0, 1)), (CellState::Empty, false));
+    assert_eq!(g.remove((1, 2)), (CellState::Empty, false));
+    assert_eq!(g.remove((2, 1)), (CellState::Empty, false));
+    assert_eq!(g.remove((1, 0)), (CellState::Empty, false));
+}
+
+#[test]
+#[should_panic(expected = "is not in grid")]
+fn grid_should_not_add_entities_outside_of_bounds() {
+    let mut g = setup::grid::grid_default();
+
+    let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
+
+    g.add((12, 37), Entity::Doodad { props: d0 });
 }
 
 #[test]

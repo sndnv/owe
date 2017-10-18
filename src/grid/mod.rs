@@ -1,7 +1,14 @@
+use std::rc::Rc;
 use ndarray::Array2;
 use pathfinding::dijkstra;
 use entities::Entity;
 use entities::structure;
+
+#[derive(Clone, Debug)]
+struct Cell {
+    rc: Rc<Entity>,
+    parent_cell: (usize, usize)
+}
 
 #[derive(PartialEq, Debug)]
 pub enum CellState {
@@ -27,7 +34,7 @@ pub enum TraversalType {
 
 #[derive(Debug)]
 pub struct Grid {
-    cells: Array2<Option<Entity>>,
+    cells: Array2<Option<Cell>>,
     width: usize,
     height: usize
 }
@@ -59,16 +66,25 @@ impl Grid {
     pub fn add(&mut self, at: (usize, usize), entity: Entity) -> (CellState, bool) {
         match self.cell_state(at) {
             CellState::Empty => {
-                //TODO - handle overlapping entities
-                match entity {
+                let entity_rc = Rc::new(entity);
+
+                match *entity_rc {
                     Entity::Structure { ref props, .. } if props.size.width * props.size.height > 1 => {
-                        //TODO - check if all cells are in grid
-                        //TODO - check if all cells are empty
-                        (CellState::Empty, true) //TODO
+                        let cells = Self::entity_cells(&props.size, at);
+
+                        if cells.iter().all(|c| self.cell_state(*c) == CellState::Empty) {
+                            for cell in cells {
+                                self.cells[cell] = Some(Cell { rc: entity_rc.clone(), parent_cell: at })
+                            }
+
+                            (CellState::Empty, true)
+                        } else {
+                            (CellState::Occupied, false)
+                        }
                     }
 
                     _ => {
-                        self.cells[at] = Some(entity);
+                        self.cells[at] = Some(Cell { rc: entity_rc.clone(), parent_cell: at });
                         (CellState::Empty, true)
                     }
                 }
@@ -91,10 +107,24 @@ impl Grid {
             }
 
             CellState::Occupied => {
-                //TODO - handle entities with size > (1, 1)
-                //TODO - handle overlapping entities
-                self.cells[at] = None;
-                (CellState::Occupied, true)
+                let cell = self.cells[at].clone().unwrap();
+
+                match *cell.rc {
+                    Entity::Structure { ref props, .. } if props.size.width * props.size.height > 1 => {
+                        let cells = Self::entity_cells(&props.size, cell.parent_cell);
+
+                        for cell in cells {
+                            self.cells[cell] = None;
+                        }
+
+                        (CellState::Occupied, true)
+                    }
+
+                    _ => {
+                        self.cells[at] = None;
+                        (CellState::Occupied, true)
+                    }
+                }
             }
 
             CellState::OutOfBounds => {
@@ -115,24 +145,19 @@ impl Grid {
         }
     }
 
-    pub fn foreach(&self, f: &Fn((usize, usize), &Option<Entity>)) -> () {
-        for ((x, y), entity) in self.cells.indexed_iter() {
-            f((x, y), entity)
-        }
-    }
-
     pub fn is_cell_in_grid(&self, cell: (usize, usize)) -> bool {
         self.width > cell.0 && self.height > cell.1
     }
 
     pub fn is_cell_passable(&self, cell: (usize, usize)) -> bool {
         self.is_cell_in_grid(cell) && match self.cells[cell] {
-            Some(ref entity) => match entity {
-                &Entity::Road => true,
-                &Entity::Roadblock => true,
-                &Entity::Walker { .. } => true,
+            Some(ref entity_cell) => match *entity_cell.rc {
+                Entity::Road => true,
+                Entity::Roadblock => true,
+                Entity::Walker { .. } => true,
                 _ => false
             },
+
             None => true //cell is empty
         }
     }
