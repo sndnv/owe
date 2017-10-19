@@ -13,7 +13,7 @@ pub enum State {
     Deleted
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum Entity {
     Road,
     Roadblock,

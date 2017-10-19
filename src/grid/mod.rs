@@ -3,11 +3,31 @@ use ndarray::Array2;
 use pathfinding::dijkstra;
 use entities::Entity;
 use entities::structure;
+use effects::Effect;
+use std::fmt;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct Cell {
-    rc: Rc<Entity>,
-    parent_cell: (usize, usize)
+    entity: Option<Rc<Entity>>,
+    parent: Option<(usize, usize)>,
+    desirability: i8,
+    active_effects: Vec<Rc<Effect>>
+}
+
+impl Cell {
+    fn empty() -> Cell {
+        Cell { entity: None, parent: None, desirability: 0, active_effects: Vec::new() }
+    }
+}
+
+impl fmt::Debug for Cell {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            formatter,
+            "Cell {{ entity: {:?}, parent: {:?}, desirability: {}, active_effects: {} }}",
+            self.entity, self.parent, self.desirability, self.active_effects.len()
+        )
+    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -34,7 +54,7 @@ pub enum TraversalType {
 
 #[derive(Debug)]
 pub struct Grid {
-    cells: Array2<Option<Cell>>,
+    cells: Array2<Cell>,
     width: usize,
     height: usize
 }
@@ -43,7 +63,7 @@ impl Grid {
     //TODO - limit grid size to prevent cursor overflow when casting coords to isize (?)
     pub fn new(size: usize) -> Grid {
         Grid {
-            cells: Array2::from_shape_fn((size, size), |_| None),
+            cells: Array2::from_shape_fn((size, size), |_| Cell::empty()),
             width: size,
             height: size
         }
@@ -63,7 +83,7 @@ impl Grid {
         })
     }
 
-    pub fn add(&mut self, at: (usize, usize), entity: Entity) -> (CellState, bool) {
+    pub fn add_entity(&mut self, at: (usize, usize), entity: Entity) -> Result<CellState, &'static str> {
         match self.cell_state(at) {
             CellState::Empty => {
                 let entity_rc = Rc::new(entity);
@@ -74,71 +94,80 @@ impl Grid {
 
                         if cells.iter().all(|c| self.cell_state(*c) == CellState::Empty) {
                             for cell in cells {
-                                self.cells[cell] = Some(Cell { rc: entity_rc.clone(), parent_cell: at })
+                                let cell_data = &mut self.cells[cell];
+                                cell_data.entity = Some(entity_rc.clone());
+                                cell_data.parent = Some(at);
                             }
 
-                            (CellState::Empty, true)
+                            Ok(CellState::Empty)
                         } else {
-                            (CellState::Occupied, false)
+                            Err("Area is not empty")
                         }
                     }
 
                     _ => {
-                        self.cells[at] = Some(Cell { rc: entity_rc.clone(), parent_cell: at });
-                        (CellState::Empty, true)
+                        self.cells[at].entity = Some(entity_rc.clone());
+                        Ok(CellState::Empty)
                     }
                 }
             }
 
-            CellState::Occupied => {
-                (CellState::Occupied, false)
-            }
-
-            CellState::OutOfBounds => {
-                panic!("Cell [{:?}] is not in grid [{:?}; {:?}]", at, self.width, self.height)
+            _ => {
+                Err("Area is not empty")
             }
         }
     }
 
-    pub fn remove(&mut self, at: (usize, usize)) -> (CellState, bool) {
+    pub fn remove_entity(&mut self, at: (usize, usize)) -> Result<CellState, &'static str> {
         match self.cell_state(at) {
-            CellState::Empty => {
-                (CellState::Empty, false)
-            }
-
             CellState::Occupied => {
-                let cell = self.cells[at].clone().unwrap();
+                let entity = self.cells[at].entity.clone().unwrap();
+                let parent = self.cells[at].parent.unwrap_or(at);
 
-                match *cell.rc {
+                match *entity {
                     Entity::Structure { ref props, .. } if props.size.width * props.size.height > 1 => {
-                        let cells = Self::entity_cells(&props.size, cell.parent_cell);
+                        let cells = Self::entity_cells(&props.size, parent);
 
                         for cell in cells {
-                            self.cells[cell] = None;
+                            let cell_data = &mut self.cells[cell];
+                            cell_data.entity = None;
+                            cell_data.parent = None;
                         }
 
-                        (CellState::Occupied, true)
+                        Ok(CellState::Occupied)
                     }
 
                     _ => {
-                        self.cells[at] = None;
-                        (CellState::Occupied, true)
+                        self.cells[at].entity = None;
+                        Ok(CellState::Occupied)
                     }
                 }
             }
 
-            CellState::OutOfBounds => {
-                panic!("Cell [{:?}] is not in grid [{:?}; {:?}]", at, self.width, self.height)
+            _ => {
+                Err("Area is empty")
             }
         }
+    }
+
+    pub fn add_effect(&mut self, at: (usize, usize), effect: Rc<Effect>) -> Result<CellState, &'static str> {
+        unimplemented!() //TODO
+    }
+
+    pub fn remove_effect(&mut self, at: (usize, usize), effect: Rc<Effect>) -> Result<CellState, &'static str> {
+        unimplemented!() //TODO
+    }
+
+    pub fn clear_effects(&mut self, at: (usize, usize)) -> Result<CellState, &'static str> {
+        unimplemented!() //TODO
     }
 
     pub fn cell_state(&self, at: (usize, usize)) -> CellState {
         match self.cells.get(at) {
             Some(cell) =>
-                match cell {
-                    &Some(_) => CellState::Occupied,
-                    &None => CellState::Empty
+                match cell.entity {
+                    Some(_) => CellState::Occupied,
+                    None => CellState::Empty
                 },
 
             None => CellState::OutOfBounds
@@ -150,8 +179,8 @@ impl Grid {
     }
 
     pub fn is_cell_passable(&self, cell: (usize, usize)) -> bool {
-        self.is_cell_in_grid(cell) && match self.cells[cell] {
-            Some(ref entity_cell) => match *entity_cell.rc {
+        self.is_cell_in_grid(cell) && match self.cells[cell].entity.clone() {
+            Some(entity_cell) => match *entity_cell {
                 Entity::Road => true,
                 Entity::Roadblock => true,
                 Entity::Walker { .. } => true,
@@ -342,6 +371,18 @@ impl Cursor {
         let cols = col_start..col_end;
 
         let effect_area = grid.cells.slice(s![rows, cols]);
+        let cell = &grid.cells[self.cell];
+
+        for effect in &cell.active_effects {
+            for affected_cell in effect_area.iter() {
+                affected_cell.entity.clone().map(|e| {
+                    let mut updated_entity = (*e).clone();
+                    effect.apply(&mut updated_entity)
+
+                    //TODO - update cell
+                });
+            }
+        }
 
         //TODO - process entity-local effects
         //TODO - process global effects

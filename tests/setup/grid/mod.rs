@@ -76,14 +76,17 @@ pub fn grid_default() -> grid::Grid {
         commodities: HashMap::new()
     };
 
-    g.add((0, 0), Entity::Doodad { props: d0 });
-    g.add((1, 0), Entity::Doodad { props: d1 });
-    g.add((2, 0), Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
-    g.add((0, 1), Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
-    g.add((2, 1), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
-    g.add((0, 2), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
-    g.add((1, 2), Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
-    g.add((2, 2), Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
+    let _ = g.add_entity((0, 0), Entity::Doodad { props: d0 });
+    let _ = g.add_entity((1, 0), Entity::Doodad { props: d1 });
+
+    let _ = g.add_entity((2, 0), Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
+    let _ = g.add_entity((0, 1), Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
+
+    let _ = g.add_entity((2, 1), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
+    let _ = g.add_entity((0, 2), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
+
+    let _ = g.add_entity((1, 2), Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
+    let _ = g.add_entity((2, 2), Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
 
     g
 }
@@ -184,21 +187,21 @@ pub fn grid_large() -> grid::Grid {
         commodities: HashMap::new()
     };
 
-    g.add((1, 0), Entity::Doodad { props: d0 });
-    g.add((2, 3), Entity::Doodad { props: d1 });
-    g.add((3, 3), Entity::Doodad { props: d2 });
+    let _ = g.add_entity((1, 0), Entity::Doodad { props: d0 });
+    let _ = g.add_entity((2, 3), Entity::Doodad { props: d1 });
+    let _ = g.add_entity((3, 3), Entity::Doodad { props: d2 });
 
-    g.add((0, 3), Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
-    g.add((0, 4), Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
-    g.add((1, 4), Entity::Resource { id: Uuid::new_v4(), props: r2, state: r2_state });
+    let _ = g.add_entity((0, 3), Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
+    let _ = g.add_entity((0, 4), Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
+    let _ = g.add_entity((1, 4), Entity::Resource { id: Uuid::new_v4(), props: r2, state: r2_state });
 
-    g.add((2, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
-    g.add((2, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
-    g.add((2, 2), Entity::Structure { id: Uuid::new_v4(), props: s2, state: s2_state });
-    g.add((4, 1), Entity::Structure { id: Uuid::new_v4(), props: s3, state: s3_state });
+    let _ = g.add_entity((2, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
+    let _ = g.add_entity((2, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
+    let _ = g.add_entity((2, 2), Entity::Structure { id: Uuid::new_v4(), props: s2, state: s2_state });
+    let _ = g.add_entity((4, 1), Entity::Structure { id: Uuid::new_v4(), props: s3, state: s3_state });
 
-    g.add((0, 2), Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
-    g.add((4, 4), Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
+    let _ = g.add_entity((0, 2), Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
+    let _ = g.add_entity((4, 4), Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
 
     g
 }

@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct Risk {
     pub fire: u8,
     pub damage: u8
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum Type {
     Housing,
     Entertainment,
@@ -19,13 +19,13 @@ pub enum Type {
     CivilService
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct Size {
     pub width: u8,
     pub height: u8
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct StructureProperties {
     pub name: String,
     pub size: Size,
@@ -35,7 +35,7 @@ pub struct StructureProperties {
     pub structure_type: Type
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct StructureState {
     pub current_employees: u8,
     pub risk: Risk,

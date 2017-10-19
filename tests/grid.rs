@@ -23,9 +23,9 @@ fn grid_should_add_entities() {
     let d1 = doodad::Doodad { name: "d1".to_owned(), is_removable: false };
     let d2 = doodad::Doodad { name: "d2".to_owned(), is_removable: false };
 
-    assert_eq!(g.add((0, 0), Entity::Doodad { props: d0 }), (CellState::Empty, true));
-    assert_eq!(g.add((1, 1), Entity::Doodad { props: d1 }), (CellState::Empty, true));
-    assert_eq!(g.add((2, 2), Entity::Doodad { props: d2 }), (CellState::Empty, true));
+    assert_eq!(g.add_entity((0, 0), Entity::Doodad { props: d0 }), Ok(CellState::Empty));
+    assert_eq!(g.add_entity((1, 1), Entity::Doodad { props: d1 }), Ok(CellState::Empty));
+    assert_eq!(g.add_entity((2, 2), Entity::Doodad { props: d2 }), Ok(CellState::Empty));
 
     assert_eq!(g.cell_state((0, 0)), CellState::Occupied);
     assert_eq!(g.cell_state((1, 0)), CellState::Empty);
@@ -56,10 +56,10 @@ fn grid_should_remove_entities_from_cell() {
     assert_eq!(g.cell_state((1, 2)), CellState::Occupied);
     assert_eq!(g.cell_state((2, 2)), CellState::Occupied);
 
-    assert_eq!(g.remove((0, 1)), (CellState::Occupied, true));
-    assert_eq!(g.remove((1, 2)), (CellState::Occupied, true));
-    assert_eq!(g.remove((2, 1)), (CellState::Occupied, true));
-    assert_eq!(g.remove((1, 0)), (CellState::Occupied, true));
+    assert_eq!(g.remove_entity((0, 1)), Ok(CellState::Occupied));
+    assert_eq!(g.remove_entity((1, 2)), Ok(CellState::Occupied));
+    assert_eq!(g.remove_entity((2, 1)), Ok(CellState::Occupied));
+    assert_eq!(g.remove_entity((1, 0)), Ok(CellState::Occupied));
 
     assert_eq!(g.cell_state((0, 0)), CellState::Occupied);
     assert_eq!(g.cell_state((1, 0)), CellState::Empty);
@@ -109,8 +109,8 @@ fn grid_should_not_add_overlapping_entities() {
     };
 
     assert_eq!(
-        g.add((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state }),
-        (CellState::Empty, true)
+        g.add_entity((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state }),
+        Ok(CellState::Empty)
     );
 
     assert_eq!(g.cell_state((0, 0)), CellState::Occupied);
@@ -126,8 +126,8 @@ fn grid_should_not_add_overlapping_entities() {
     assert_eq!(g.cell_state((2, 2)), CellState::Empty);
 
     assert_eq!(
-        g.add((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
-        (CellState::Occupied, false)
+        g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
+        Err("Area is not empty")
     );
 }
 
@@ -166,8 +166,8 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
     };
 
     assert_eq!(
-        g.add((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state }),
-        (CellState::Empty, true)
+        g.add_entity((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state }),
+        Ok(CellState::Empty)
     );
 
     assert_eq!(g.cell_state((0, 0)), CellState::Occupied);
@@ -183,11 +183,11 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
     assert_eq!(g.cell_state((2, 2)), CellState::Empty);
 
     assert_eq!(
-        g.add((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
-        (CellState::Occupied, false)
+        g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
+        Err("Area is not empty")
     );
 
-    assert_eq!(g.remove((0, 1)), (CellState::Occupied, true));
+    assert_eq!(g.remove_entity((0, 1)), Ok(CellState::Occupied));
 
     assert_eq!(g.cell_state((0, 0)), CellState::Empty);
     assert_eq!(g.cell_state((1, 0)), CellState::Empty);
@@ -217,8 +217,8 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
     };
 
     assert_eq!(
-        g.add((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1_new, state: s1_new_state }),
-        (CellState::Empty, true)
+        g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1_new, state: s1_new_state }),
+        Ok(CellState::Empty)
     );
 
     assert_eq!(g.cell_state((0, 0)), CellState::Empty);
@@ -250,28 +250,26 @@ fn grid_should_not_remove_entities_not_in_cell() {
     assert_eq!(g.cell_state((1, 2)), CellState::Empty);
     assert_eq!(g.cell_state((2, 2)), CellState::Empty);
 
-    assert_eq!(g.remove((0, 1)), (CellState::Empty, false));
-    assert_eq!(g.remove((1, 2)), (CellState::Empty, false));
-    assert_eq!(g.remove((2, 1)), (CellState::Empty, false));
-    assert_eq!(g.remove((1, 0)), (CellState::Empty, false));
+    assert_eq!(g.remove_entity((0, 1)), Err("Area is empty"));
+    assert_eq!(g.remove_entity((1, 2)), Err("Area is empty"));
+    assert_eq!(g.remove_entity((2, 1)), Err("Area is empty"));
+    assert_eq!(g.remove_entity((1, 0)), Err("Area is empty"));
 }
 
 #[test]
-#[should_panic(expected = "is not in grid")]
 fn grid_should_not_add_entities_outside_of_bounds() {
     let mut g = setup::grid::grid_default();
 
     let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
 
-    g.add((12, 37), Entity::Doodad { props: d0 });
+    assert_eq!(g.add_entity((12, 37), Entity::Doodad { props: d0 }), Err("Area is not empty"));
 }
 
 #[test]
-#[should_panic(expected = "is not in grid")]
 fn grid_should_not_remove_entities_outside_of_bounds() {
     let mut g = setup::grid::grid_default();
 
-    g.remove((12, 37));
+    assert_eq!(g.remove_entity((12, 37)), Err("Area is empty"));
 }
 
 #[test]
@@ -433,7 +431,7 @@ fn grid_with_entities_should_calculate_paths_between_cells() {
         Some((vec![(0, 0), (0, 1), (0, 2), (1, 3), (2, 4), (3, 4), (4, 3), (3, 2), (3, 1), (4, 0)], 9))
     );
 
-    g.remove((2, 2));
+    assert_eq!(g.remove_entity((2, 2)), Ok(CellState::Occupied));
 
     assert_eq!(
         g.path_between((0, 0), (4, 0)),
