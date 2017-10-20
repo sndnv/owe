@@ -2,12 +2,14 @@ extern crate owe;
 extern crate uuid;
 
 mod setup;
+mod utils;
 
 use uuid::Uuid;
 use std::collections::HashMap;
 use owe::entities::Entity;
 use owe::entities::{doodad, structure};
 use owe::grid::{Direction, CellState, GridError};
+use utils::extract;
 
 fn sort_cells(cells: &Vec<(usize, usize)>) -> Vec<(usize, usize)> {
     let mut result = cells.clone();
@@ -451,99 +453,165 @@ fn grid_with_entities_should_calculate_paths_between_cells() {
 
 #[test]
 fn grid_should_add_effects_to_cell() {
-    let (mut g, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
 
-    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
 
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), true);
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[0]), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[1]), true);
+    assert_eq!(g.is_effect_in_cell((2, 0), &effects[2]), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), &effects[2]), true);
+    assert_eq!(g.is_effect_in_cell((2, 2), &effects[2]), true);
 }
 
 #[test]
 fn grid_should_remove_effects_from_cell() {
-    let (mut g, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
 
-    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
 
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), true);
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[0]), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[1]), true);
+    assert_eq!(g.is_effect_in_cell((2, 0), &effects[2]), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), &effects[2]), true);
+    assert_eq!(g.is_effect_in_cell((2, 2), &effects[2]), true);
 
-    assert_eq!(g.remove_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.remove_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.remove_cell_effect((0, 0), &effects[1]), Ok(CellState::Occupied));
+    assert_eq!(g.remove_cell_effect((2, 1), &effects[2]), Ok(CellState::Occupied));
 
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), true);
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), false);
-    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), false);
-    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[0]), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[1]), false);
+    assert_eq!(g.is_effect_in_cell((2, 0), &effects[2]), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), &effects[2]), false);
+    assert_eq!(g.is_effect_in_cell((2, 2), &effects[2]), true);
 }
 
 #[test]
 fn grid_should_clear_effects_from_cell() {
-    let (mut g, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
 
-    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
 
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), true);
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[0]), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[1]), true);
+    assert_eq!(g.is_effect_in_cell((2, 0), &effects[2]), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), &effects[2]), true);
+    assert_eq!(g.is_effect_in_cell((2, 2), &effects[2]), true);
 
-    assert_eq!(g.clear_effects((0, 0)), Ok(CellState::Occupied));
+    assert_eq!(g.clear_cell_effects((0, 0)), Ok(CellState::Occupied));
 
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), false);
-    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), false);
-    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), true);
-    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[0]), false);
+    assert_eq!(g.is_effect_in_cell((0, 0), &effects[1]), false);
+    assert_eq!(g.is_effect_in_cell((2, 0), &effects[2]), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), &effects[2]), true);
+    assert_eq!(g.is_effect_in_cell((2, 2), &effects[2]), true);
 }
 
 #[test]
 fn grid_should_not_allow_duplicate_effects_for_cell() {
-    let (mut g, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
 
-    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
-    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Err(GridError::EffectPresent));
-}
-
-#[test]
-fn grid_should_not_add_effects_outside_of_bounds() {
-    let (mut g, effects) = setup::grid::grid_with_effects();
-
-    assert_eq!(g.add_effect((6, 42), effects[0].clone()), Err(GridError::CellUnavailable));
-}
-
-#[test]
-fn grid_should_not_remove_effects_outside_of_bounds() {
-    let (mut g, effects) = setup::grid::grid_with_effects();
-
-    assert_eq!(g.remove_effect((6, 42), effects[0].clone()), Err(GridError::CellUnavailable));
+    assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Err(GridError::EffectPresent));
 }
 
 #[test]
 fn grid_should_not_remove_effects_not_in_cell() {
-    let (mut g, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
 
-    assert_eq!(g.remove_effect((0, 0), effects[0].clone()), Err(GridError::EffectMissing));
+    assert_eq!(g.remove_cell_effect((0, 0), &effects[0]), Err(GridError::EffectMissing));
+}
+
+#[test]
+fn grid_should_not_add_effects_outside_of_bounds() {
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_cell_effect((6, 42), effects[0].clone()), Err(GridError::CellUnavailable));
+}
+
+#[test]
+fn grid_should_not_remove_effects_outside_of_bounds() {
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.remove_cell_effect((6, 42), &effects[0]), Err(GridError::CellUnavailable));
+}
+
+#[test]
+fn grid_should_add_global_effects() {
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_global_effect(effects[0].clone()), Ok(()));
+    assert_eq!(g.add_global_effect(effects[1].clone()), Ok(()));
+    assert_eq!(g.add_global_effect(effects[2].clone()), Ok(()));
+
+    assert_eq!(g.is_effect_global(&effects[0]), true);
+    assert_eq!(g.is_effect_global(&effects[1]), true);
+    assert_eq!(g.is_effect_global(&effects[2]), true);
+}
+
+#[test]
+fn grid_should_remove_global_effects() {
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_global_effect(effects[0].clone()), Ok(()));
+    assert_eq!(g.add_global_effect(effects[1].clone()), Ok(()));
+    assert_eq!(g.add_global_effect(effects[2].clone()), Ok(()));
+
+    assert_eq!(g.is_effect_global(&effects[0]), true);
+    assert_eq!(g.is_effect_global(&effects[1]), true);
+    assert_eq!(g.is_effect_global(&effects[2]), true);
+
+    assert_eq!(g.remove_global_effect(&effects[1]), Ok(()));
+
+    assert_eq!(g.is_effect_global(&effects[0]), true);
+    assert_eq!(g.is_effect_global(&effects[1]), false);
+    assert_eq!(g.is_effect_global(&effects[2]), true);
+}
+
+#[test]
+fn grid_should_clear_global_effects() {
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_global_effect(effects[0].clone()), Ok(()));
+    assert_eq!(g.add_global_effect(effects[1].clone()), Ok(()));
+    assert_eq!(g.add_global_effect(effects[2].clone()), Ok(()));
+
+    assert_eq!(g.is_effect_global(&effects[0]), true);
+    assert_eq!(g.is_effect_global(&effects[1]), true);
+    assert_eq!(g.is_effect_global(&effects[2]), true);
+
+    g.clear_global_effects();
+
+    assert_eq!(g.is_effect_global(&effects[0]), false);
+    assert_eq!(g.is_effect_global(&effects[1]), false);
+    assert_eq!(g.is_effect_global(&effects[2]), false);
+}
+
+#[test]
+fn grid_should_not_allow_duplicate_global_effects() {
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_global_effect(effects[0].clone()), Ok(()));
+    assert_eq!(g.add_global_effect(effects[0].clone()), Err(GridError::EffectPresent));
+}
+
+#[test]
+fn grid_should_not_remove_nonexistent_global_effects() {
+    let (mut g, _, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.remove_global_effect(&effects[1]), Err((GridError::EffectMissing)));
 }
 
 #[test]
@@ -648,7 +716,168 @@ fn cursor_should_move_right() {
 
 #[test]
 fn cursor_should_process_effects() {
-    //TODO - implement
+    let (mut g, mut gc, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_global_effect(effects[1].clone()), Ok(()));
+
+    assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_cell_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
+
+    assert_eq!(gc.position(), (0, 0));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("d0".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("d1".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(2));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
+
+    gc.process_and_advance(&mut g); //process (0, 0) and go to (1, 0)
+
+    assert_eq!(gc.position(), (1, 0));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(2));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
+
+    gc.process_and_advance(&mut g); //process (1, 0) and go to (2, 0)
+
+    assert_eq!(gc.position(), (2, 0));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(2));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
+
+    gc.process_and_advance(&mut g); //process (2, 0) and go to (0, 1)
+
+    assert_eq!(gc.position(), (0, 1));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(1));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
+
+    gc.process_and_advance(&mut g); //process (0, 1) and go to (1, 1)
+
+    assert_eq!(gc.position(), (1, 1));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(1));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
+
+    gc.process_and_advance(&mut g); //process (1, 1) and go to (2, 1)
+
+    assert_eq!(gc.position(), (2, 1));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(1));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
+
+    gc.process_and_advance(&mut g); //process (2, 1) and go to (0, 2)
+
+    assert_eq!(gc.position(), (0, 2));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(0));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(Some(3)));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(0)));
+
+    gc.process_and_advance(&mut g); //process (0, 2) and go to (1, 2)
+
+    assert_eq!(gc.position(), (1, 2));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(0));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(Some(3)));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(0)));
+
+    gc.process_and_advance(&mut g); //process (1, 2) and go to (2, 2)
+
+    assert_eq!(gc.position(), (2, 2));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(0));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(Some(3)));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(0)));
+
+    gc.process_and_advance(&mut g); //process (2, 2) and go to (0, 0)
+
+    assert_eq!(gc.position(), (0, 0));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 1, fire: 5 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 8 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(0));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(Some(2)));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(0)));
+
+    for _ in 0..9 {
+        gc.process_and_advance(&mut g);
+    }
+
+    assert_eq!(gc.position(), (0, 0));
+    assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::doodad::name(g.entity((1, 0))), Some("updated doodad name".to_owned()));
+    assert_eq!(extract::structure::employees(g.entity((2, 1))), Some(0));
+    assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
+    assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 2, fire: 10 }));
+    assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 13 }));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(0));
+    assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
+    assert_eq!(extract::walker::life(g.entity((1, 2))), Some(Some(0)));
+    assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(0)));
 }
 
 #[test]

@@ -16,9 +16,11 @@ impl effects::Effect for TestEffect0 {
                     state.current_employees += 1;
                 }
             }
+
             &mut Entity::Doodad { ref mut props } => {
                 props.name = "updated doodad name".to_owned();
             }
+
             _ => () //does nothing
         }
     }
@@ -29,10 +31,11 @@ impl effects::Effect for TestEffect1 {
         match other_entity {
             &mut Entity::Structure { ref mut state, .. } => {
                 state.risk.fire += 5;
-                if state.risk.damage > 0 {
-                    state.risk.damage -= 1;
+                if state.risk.damage < 3 {
+                    state.risk.damage += 1;
                 }
             }
+
             _ => () //does nothing
         }
     }
@@ -43,15 +46,17 @@ impl effects::Effect for TestEffect2 {
         match other_entity {
             &mut Entity::Resource { ref mut state, .. } => {
                 if state.current_level > 0 {
-                    state.current_level -= 5;
+                    state.current_level -= 1;
                 }
             }
+
             &mut Entity::Walker { ref mut state, ref props, .. } => {
                 match state.current_life {
                     Some(level) => if level > 0 { state.current_life = Some(level - 1) },
                     None => state.current_life = props.max_life
                 };
             }
+
             _ => () //does nothing
         }
     }

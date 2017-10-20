@@ -24,8 +24,8 @@ pub fn grid_default() -> grid::Grid {
 
     let r0 = resource::ResourceProperties { max_level: 5, name: "r0".to_owned(), replenish_time: Some(5) };
     let r1 = resource::ResourceProperties { max_level: 5, name: "r1".to_owned(), replenish_time: None };
-    let r0_state = resource::ResourceState { current_level: 0 };
-    let r1_state = resource::ResourceState { current_level: 3 };
+    let r0_state = resource::ResourceState { current_level: 2 };
+    let r1_state = resource::ResourceState { current_level: 5 };
 
     let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
@@ -60,13 +60,13 @@ pub fn grid_default() -> grid::Grid {
     let w0 = walker::WalkerProperties {
         name: "w0".to_owned(),
         patrol: None,
-        max_life: None
+        max_life: Some(3)
     };
 
     let w1 = walker::WalkerProperties {
         name: "w1".to_owned(),
         patrol: Some(5),
-        max_life: None
+        max_life: Some(1)
     };
 
     let w0_state = walker::WalkerState {
@@ -75,7 +75,7 @@ pub fn grid_default() -> grid::Grid {
     };
 
     let w1_state = walker::WalkerState {
-        current_life: None,
+        current_life: Some(1),
         commodities: HashMap::new()
     };
 
@@ -217,9 +217,10 @@ pub fn grid_with_direction_from(direction: grid::Direction, from: (usize, usize)
     (g, gc)
 }
 
-pub fn grid_with_effects() -> (grid::Grid, Vec<Rc<Effect>>) {
+pub fn grid_with_effects() -> (grid::Grid, grid::Cursor, Vec<Rc<Effect>>) {
     let g = grid_default();
+    let gc = grid::Cursor::new(1, grid::Direction::Right, (0, 0));
     let effects = effects_default();
 
-    (g, effects)
+    (g, gc, effects)
 }
