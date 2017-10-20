@@ -1,13 +1,14 @@
+use std::rc::Rc;
 use owe::effects;
 use owe::entities::Entity;
 
-struct TestEffect1 {}
+pub struct TestEffect0 {}
 
-struct TestEffect2 {}
+pub struct TestEffect1 {}
 
-struct TestEffect3 {}
+pub struct TestEffect2 {}
 
-impl effects::Effect for TestEffect1 {
+impl effects::Effect for TestEffect0 {
     fn apply(&self, other_entity: &mut Entity) -> () {
         match other_entity {
             &mut Entity::Structure { ref mut state, ref props, .. } => {
@@ -23,7 +24,7 @@ impl effects::Effect for TestEffect1 {
     }
 }
 
-impl effects::Effect for TestEffect2 {
+impl effects::Effect for TestEffect1 {
     fn apply(&self, other_entity: &mut Entity) -> () {
         match other_entity {
             &mut Entity::Structure { ref mut state, .. } => {
@@ -37,7 +38,7 @@ impl effects::Effect for TestEffect2 {
     }
 }
 
-impl effects::Effect for TestEffect3 {
+impl effects::Effect for TestEffect2 {
     fn apply(&self, other_entity: &mut Entity) -> () {
         match other_entity {
             &mut Entity::Resource { ref mut state, .. } => {
@@ -54,4 +55,12 @@ impl effects::Effect for TestEffect3 {
             _ => () //does nothing
         }
     }
+}
+
+pub fn effects_default() -> Vec<Rc<effects::Effect>> {
+    let e0 = Rc::new(TestEffect0 {});
+    let e1 = Rc::new(TestEffect1 {});
+    let e2 = Rc::new(TestEffect2 {});
+
+    vec![e0 as Rc<effects::Effect>, e1, e2]
 }

@@ -6,8 +6,8 @@ mod setup;
 use uuid::Uuid;
 use std::collections::HashMap;
 use owe::entities::Entity;
-use owe::entities::{ doodad, structure };
-use owe::grid::{Direction, CellState};
+use owe::entities::{doodad, structure};
+use owe::grid::{Direction, CellState, GridError};
 
 fn sort_cells(cells: &Vec<(usize, usize)>) -> Vec<(usize, usize)> {
     let mut result = cells.clone();
@@ -16,7 +16,7 @@ fn sort_cells(cells: &Vec<(usize, usize)>) -> Vec<(usize, usize)> {
 }
 
 #[test]
-fn grid_should_add_entities() {
+fn grid_should_add_entities_to_cell() {
     let mut g = setup::grid::grid_empty();
 
     let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
@@ -127,7 +127,7 @@ fn grid_should_not_add_overlapping_entities() {
 
     assert_eq!(
         g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
-        Err("Area is not empty")
+        Err(GridError::CellUnavailable)
     );
 }
 
@@ -184,7 +184,7 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
 
     assert_eq!(
         g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
-        Err("Area is not empty")
+        Err(GridError::CellUnavailable)
     );
 
     assert_eq!(g.remove_entity((0, 1)), Ok(CellState::Occupied));
@@ -250,10 +250,10 @@ fn grid_should_not_remove_entities_not_in_cell() {
     assert_eq!(g.cell_state((1, 2)), CellState::Empty);
     assert_eq!(g.cell_state((2, 2)), CellState::Empty);
 
-    assert_eq!(g.remove_entity((0, 1)), Err("Area is empty"));
-    assert_eq!(g.remove_entity((1, 2)), Err("Area is empty"));
-    assert_eq!(g.remove_entity((2, 1)), Err("Area is empty"));
-    assert_eq!(g.remove_entity((1, 0)), Err("Area is empty"));
+    assert_eq!(g.remove_entity((0, 1)), Err(GridError::CellUnavailable));
+    assert_eq!(g.remove_entity((1, 2)), Err(GridError::CellUnavailable));
+    assert_eq!(g.remove_entity((2, 1)), Err(GridError::CellUnavailable));
+    assert_eq!(g.remove_entity((1, 0)), Err(GridError::CellUnavailable));
 }
 
 #[test]
@@ -262,14 +262,14 @@ fn grid_should_not_add_entities_outside_of_bounds() {
 
     let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
 
-    assert_eq!(g.add_entity((12, 37), Entity::Doodad { props: d0 }), Err("Area is not empty"));
+    assert_eq!(g.add_entity((12, 37), Entity::Doodad { props: d0 }), Err(GridError::CellUnavailable));
 }
 
 #[test]
 fn grid_should_not_remove_entities_outside_of_bounds() {
     let mut g = setup::grid::grid_default();
 
-    assert_eq!(g.remove_entity((12, 37)), Err("Area is empty"));
+    assert_eq!(g.remove_entity((12, 37)), Err(GridError::CellUnavailable));
 }
 
 #[test]
@@ -450,102 +450,199 @@ fn grid_with_entities_should_calculate_paths_between_cells() {
 }
 
 #[test]
+fn grid_should_add_effects_to_cell() {
+    let (mut g, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
+
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+}
+
+#[test]
+fn grid_should_remove_effects_from_cell() {
+    let (mut g, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
+
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+
+    assert_eq!(g.remove_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.remove_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
+
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), false);
+    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), false);
+    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+}
+
+#[test]
+fn grid_should_clear_effects_from_cell() {
+    let (mut g, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((2, 0), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((2, 1), effects[2].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((2, 2), effects[2].clone()), Ok(CellState::Occupied));
+
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), true);
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+
+    assert_eq!(g.clear_effects((0, 0)), Ok(CellState::Occupied));
+
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[0].clone()), false);
+    assert_eq!(g.is_effect_in_cell((0, 0), effects[1].clone()), false);
+    assert_eq!(g.is_effect_in_cell((2, 0), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 1), effects[2].clone()), true);
+    assert_eq!(g.is_effect_in_cell((2, 2), effects[2].clone()), true);
+}
+
+#[test]
+fn grid_should_not_allow_duplicate_effects_for_cell() {
+    let (mut g, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
+    assert_eq!(g.add_effect((0, 0), effects[0].clone()), Err(GridError::EffectPresent));
+}
+
+#[test]
+fn grid_should_not_add_effects_outside_of_bounds() {
+    let (mut g, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.add_effect((6, 42), effects[0].clone()), Err(GridError::CellUnavailable));
+}
+
+#[test]
+fn grid_should_not_remove_effects_outside_of_bounds() {
+    let (mut g, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.remove_effect((6, 42), effects[0].clone()), Err(GridError::CellUnavailable));
+}
+
+#[test]
+fn grid_should_not_remove_effects_not_in_cell() {
+    let (mut g, effects) = setup::grid::grid_with_effects();
+
+    assert_eq!(g.remove_effect((0, 0), effects[0].clone()), Err(GridError::EffectMissing));
+}
+
+#[test]
 fn cursor_should_move_up() {
-    let (g, mut gc) = setup::grid::grid_with_direction_from(Direction::Up, (2, 2));
+    let (mut g, mut gc) = setup::grid::grid_with_direction_from(Direction::Up, (2, 2));
 
     assert_eq!(gc.position(), (2, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 2));
 }
 
 #[test]
 fn cursor_should_move_down() {
-    let (g, mut gc) = setup::grid::grid_with_direction_from(Direction::Down, (0, 0));
+    let (mut g, mut gc) = setup::grid::grid_with_direction_from(Direction::Down, (0, 0));
 
     assert_eq!(gc.position(), (0, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 0));
 }
 
 #[test]
 fn cursor_should_move_left() {
-    let (g, mut gc) = setup::grid::grid_with_direction_from(Direction::Left, (2, 2));
+    let (mut g, mut gc) = setup::grid::grid_with_direction_from(Direction::Left, (2, 2));
 
     assert_eq!(gc.position(), (2, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 2));
 }
 
 #[test]
 fn cursor_should_move_right() {
-    let (g, mut gc) = setup::grid::grid_with_direction_from(Direction::Right, (0, 0));
+    let (mut g, mut gc) = setup::grid::grid_with_direction_from(Direction::Right, (0, 0));
 
     assert_eq!(gc.position(), (0, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 0));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 1));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (1, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (2, 2));
-    gc.process_and_advance(&g);
+    gc.process_and_advance(&mut g);
     assert_eq!(gc.position(), (0, 0));
 }
 

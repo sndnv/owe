@@ -52,6 +52,13 @@ pub enum TraversalType {
     RoadOrEmpty
 }
 
+#[derive(Eq, PartialEq, Debug)]
+pub enum GridError {
+    CellUnavailable,
+    EffectPresent,
+    EffectMissing
+}
+
 #[derive(Debug)]
 pub struct Grid {
     cells: Array2<Cell>,
@@ -83,7 +90,7 @@ impl Grid {
         })
     }
 
-    pub fn add_entity(&mut self, at: (usize, usize), entity: Entity) -> Result<CellState, &'static str> {
+    pub fn add_entity(&mut self, at: (usize, usize), entity: Entity) -> Result<CellState, GridError> {
         match self.cell_state(at) {
             CellState::Empty => {
                 let entity_rc = Rc::new(entity);
@@ -101,7 +108,7 @@ impl Grid {
 
                             Ok(CellState::Empty)
                         } else {
-                            Err("Area is not empty")
+                            Err(GridError::CellUnavailable)
                         }
                     }
 
@@ -113,12 +120,12 @@ impl Grid {
             }
 
             _ => {
-                Err("Area is not empty")
+                Err(GridError::CellUnavailable)
             }
         }
     }
 
-    pub fn remove_entity(&mut self, at: (usize, usize)) -> Result<CellState, &'static str> {
+    pub fn remove_entity(&mut self, at: (usize, usize)) -> Result<CellState, GridError> {
         match self.cell_state(at) {
             CellState::Occupied => {
                 let entity = self.cells[at].entity.clone().unwrap();
@@ -145,21 +152,61 @@ impl Grid {
             }
 
             _ => {
-                Err("Area is empty")
+                Err(GridError::CellUnavailable)
             }
         }
     }
 
-    pub fn add_effect(&mut self, at: (usize, usize), effect: Rc<Effect>) -> Result<CellState, &'static str> {
-        unimplemented!() //TODO
+    pub fn add_effect(&mut self, at: (usize, usize), effect: Rc<Effect>) -> Result<CellState, GridError> {
+        match self.cell_state(at) {
+            CellState::OutOfBounds => {
+                Err(GridError::CellUnavailable)
+            }
+
+            state => {
+                if self.is_effect_in_cell(at, effect.clone()) {
+                    Err(GridError::EffectPresent)
+                } else {
+                    self.cells[at].active_effects.push(effect);
+                    Ok(state)
+                }
+            }
+        }
     }
 
-    pub fn remove_effect(&mut self, at: (usize, usize), effect: Rc<Effect>) -> Result<CellState, &'static str> {
-        unimplemented!() //TODO
+    pub fn remove_effect(&mut self, at: (usize, usize), effect: Rc<Effect>) -> Result<CellState, GridError> {
+        match self.cell_state(at) {
+            CellState::OutOfBounds => {
+                Err(GridError::CellUnavailable)
+            }
+
+            state => {
+                match self.cells[at].active_effects.iter()
+                    .position(|e| {
+                        Rc::ptr_eq(e, &effect)
+                    })
+                    .map(|i| {
+                        self.cells[at].active_effects.remove(i)
+                    }) {
+                    Some(_) => Ok(state),
+                    None => Err(GridError::EffectMissing)
+                }
+            }
+        }
     }
 
-    pub fn clear_effects(&mut self, at: (usize, usize)) -> Result<CellState, &'static str> {
-        unimplemented!() //TODO
+    pub fn clear_effects(&mut self, at: (usize, usize)) -> Result<CellState, GridError> {
+        match self.cell_state(at) {
+            CellState::OutOfBounds => {
+                Err(GridError::CellUnavailable)
+            }
+
+            state => {
+                self.cells[at].active_effects.clear();
+
+                Ok(state)
+            }
+        }
     }
 
     pub fn cell_state(&self, at: (usize, usize)) -> CellState {
@@ -188,6 +235,24 @@ impl Grid {
             },
 
             None => true //cell is empty
+        }
+    }
+
+    pub fn is_effect_in_cell(&self, cell: (usize, usize), effect: Rc<Effect>) -> bool {
+        match self.cell_state(cell) {
+            CellState::OutOfBounds => {
+                false
+            }
+
+            _ => {
+                match self.cells[cell].active_effects.iter()
+                    .position(|e| {
+                        Rc::ptr_eq(e, &effect)
+                    }) {
+                    Some(_) => true,
+                    None => false
+                }
+            }
         }
     }
 
@@ -348,7 +413,7 @@ impl Cursor {
     }
 
     //processes all effects for the current cell and moves to the next cell in the grid
-    pub fn process_and_advance(&mut self, grid: &Grid) -> () {
+    pub fn process_and_advance(&mut self, grid: &mut Grid) -> () {
         let cell_x = self.cell.0 as isize;
         let cell_y = self.cell.1 as isize;
         let effect_range = self.range as isize;
@@ -370,22 +435,19 @@ impl Cursor {
         let rows = row_start..row_end;
         let cols = col_start..col_end;
 
-        let effect_area = grid.cells.slice(s![rows, cols]);
-        let cell = &grid.cells[self.cell];
+        let active_effects = &grid.cells[self.cell].active_effects.clone();
+        let mut effect_area = grid.cells.slice_mut(s![rows, cols]);
 
-        for effect in &cell.active_effects {
-            for affected_cell in effect_area.iter() {
+        for effect in active_effects {
+            for affected_cell in effect_area.iter_mut() {
                 affected_cell.entity.clone().map(|e| {
                     let mut updated_entity = (*e).clone();
-                    effect.apply(&mut updated_entity)
-
-                    //TODO - update cell
+                    effect.apply(&mut updated_entity);
+                    affected_cell.entity = Some(Rc::new(updated_entity));
                 });
             }
         }
 
-        //TODO - process entity-local effects
-        //TODO - process global effects
         //TODO - process resource production
         //TODO - process walker production
         //TODO - process action queue

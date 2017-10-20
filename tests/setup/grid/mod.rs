@@ -4,6 +4,9 @@ use owe::entities::resource;
 use owe::entities::structure;
 use owe::entities::walker;
 use owe::entities::Entity;
+use owe::effects::Effect;
+use setup::effects::*;
+use std::rc::Rc;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -26,7 +29,7 @@ pub fn grid_default() -> grid::Grid {
 
     let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
-        size: structure::Size { width: 1, height: 1},
+        size: structure::Size { width: 1, height: 1 },
         max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
@@ -35,7 +38,7 @@ pub fn grid_default() -> grid::Grid {
 
     let s1 = structure::StructureProperties {
         name: "s1".to_owned(),
-        size: structure::Size { width: 1, height: 1},
+        size: structure::Size { width: 1, height: 1 },
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
@@ -107,7 +110,7 @@ pub fn grid_large() -> grid::Grid {
 
     let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
-        size: structure::Size { width: 1, height: 1},
+        size: structure::Size { width: 1, height: 1 },
         max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
@@ -116,7 +119,7 @@ pub fn grid_large() -> grid::Grid {
 
     let s1 = structure::StructureProperties {
         name: "s1".to_owned(),
-        size: structure::Size { width: 1, height: 1},
+        size: structure::Size { width: 1, height: 1 },
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
@@ -125,7 +128,7 @@ pub fn grid_large() -> grid::Grid {
 
     let s2 = structure::StructureProperties {
         name: "s2".to_owned(),
-        size: structure::Size { width: 1, height: 1},
+        size: structure::Size { width: 1, height: 1 },
         max_employees: 10,
         cost: 500,
         desirability: (1, 2, 3, 4, 5, 6),
@@ -134,7 +137,7 @@ pub fn grid_large() -> grid::Grid {
 
     let s3 = structure::StructureProperties {
         name: "s3".to_owned(),
-        size: structure::Size { width: 1, height: 1},
+        size: structure::Size { width: 1, height: 1 },
         max_employees: 1,
         cost: 1,
         desirability: (1, 2, 3, 4, 5, 6),
@@ -214,12 +217,9 @@ pub fn grid_with_direction_from(direction: grid::Direction, from: (usize, usize)
     (g, gc)
 }
 
-pub fn grid_with_effects() -> (grid::Grid, grid::Cursor) {
+pub fn grid_with_effects() -> (grid::Grid, Vec<Rc<Effect>>) {
     let g = grid_default();
+    let effects = effects_default();
 
-    //TODO - create effects
-
-    let gc = grid::Cursor::new(1, grid::Direction::Right, (0, 0));
-
-    (g, gc)
+    (g, effects)
 }
