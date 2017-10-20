@@ -9,8 +9,8 @@ pub struct TestEffect1 {}
 pub struct TestEffect2 {}
 
 impl effects::Effect for TestEffect0 {
-    fn apply(&self, other_entity: &mut Entity) -> () {
-        match other_entity {
+    fn apply(&self, entity: &mut Entity) -> () {
+        match entity {
             &mut Entity::Structure { ref mut state, ref props, .. } => {
                 if state.current_employees < props.max_employees {
                     state.current_employees += 1;
@@ -27,8 +27,8 @@ impl effects::Effect for TestEffect0 {
 }
 
 impl effects::Effect for TestEffect1 {
-    fn apply(&self, other_entity: &mut Entity) -> () {
-        match other_entity {
+    fn apply(&self, entity: &mut Entity) -> () {
+        match entity {
             &mut Entity::Structure { ref mut state, .. } => {
                 state.risk.fire += 5;
                 if state.risk.damage < 3 {
@@ -42,8 +42,8 @@ impl effects::Effect for TestEffect1 {
 }
 
 impl effects::Effect for TestEffect2 {
-    fn apply(&self, other_entity: &mut Entity) -> () {
-        match other_entity {
+    fn apply(&self, entity: &mut Entity) -> () {
+        match entity {
             &mut Entity::Resource { ref mut state, .. } => {
                 if state.current_level > 0 {
                     state.current_level -= 1;

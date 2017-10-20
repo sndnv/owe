@@ -1,5 +1,6 @@
 pub mod exchange;
 
+use entities::Entity;
 use entities::walker::WalkerProperties;
 
 #[derive(Debug)]
@@ -8,12 +9,10 @@ pub struct Commodity {
     pub amount: u32
 }
 
-//trait implemented on an entity that governs its commodity production
 pub trait CommodityProducer {
-    fn produce_commodity(&self) -> Commodity;
+    fn produce_commodity(&mut self, entity: &Entity) -> Option<Commodity>;
 }
 
-//trait implemented on an entity that governs its walker production
 pub trait WalkerProducer {
-    fn produce_walker(&self) -> WalkerProperties;
+    fn produce_walker(&mut self, entity: &Entity) -> Option<WalkerProperties>;
 }

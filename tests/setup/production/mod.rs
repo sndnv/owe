@@ -3,7 +3,7 @@ use owe::entities::resource;
 use owe::entities::structure;
 use owe::entities::walker;
 use owe::entities::Entity;
-use owe::production::Commodity;
+use owe::production::{Commodity, CommodityProducer, WalkerProducer};
 use owe::production::exchange::CommodityExchange;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -24,7 +24,7 @@ pub fn commodities_default() -> Vec<Commodity> {
 pub fn entities_default() -> Vec<Rc<Entity>> {
     let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
-        size: structure::Size { width: 1, height: 1},
+        size: structure::Size { width: 1, height: 1 },
         max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
@@ -33,7 +33,7 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
 
     let s1 = structure::StructureProperties {
         name: "s1".to_owned(),
-        size: structure::Size { width: 3, height: 1},
+        size: structure::Size { width: 3, height: 1 },
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
@@ -114,4 +114,45 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
     let e11 = Rc::new(Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
 
     vec![e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]
+}
+
+pub struct TestCommodityProducer0 {}
+
+impl CommodityProducer for TestCommodityProducer0 {
+    fn produce_commodity(&mut self, entity: &Entity) -> Option<Commodity> {
+        match entity {
+            &Entity::Structure { ref state, ref props, .. } => {
+                if props.max_employees == state.current_employees {
+                    Some(Commodity { name: "c0".to_owned(), amount: 100 })
+                } else {
+                    None
+                }
+            }
+
+            _ => None //does nothing
+        }
+    }
+}
+
+pub struct TestCommodityProducer1 {
+    max_progress: u8,
+    current_progress: u8
+}
+
+impl CommodityProducer for TestCommodityProducer1 {
+    fn produce_commodity(&mut self, entity: &Entity) -> Option<Commodity> {
+        match entity {
+            &Entity::Structure { .. } => {
+                if self.max_progress < self.current_progress {
+                    self.current_progress += 1;
+                    None
+                } else {
+                    self.current_progress = 0;
+                    Some(Commodity { name: "c1".to_owned(), amount: 1 })
+                }
+            }
+
+            _ => None //does nothing
+        }
+    }
 }
