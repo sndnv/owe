@@ -343,7 +343,6 @@ impl Grid {
     }
 }
 
-#[derive(Debug)]
 pub struct Cursor {
     cell: (usize, usize),
     direction: Direction,
