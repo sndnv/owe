@@ -111,7 +111,7 @@ fn grid_should_not_add_overlapping_entities() {
     };
 
     assert_eq!(
-        g.add_entity((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state }),
+        g.add_entity((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state, producer: None }),
         Ok(CellState::Empty)
     );
 
@@ -128,7 +128,7 @@ fn grid_should_not_add_overlapping_entities() {
     assert_eq!(g.cell_state((2, 2)), CellState::Empty);
 
     assert_eq!(
-        g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
+        g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state, producer: None }),
         Err(GridError::CellUnavailable)
     );
 }
@@ -168,7 +168,7 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
     };
 
     assert_eq!(
-        g.add_entity((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state }),
+        g.add_entity((0, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state, producer: None }),
         Ok(CellState::Empty)
     );
 
@@ -185,7 +185,7 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
     assert_eq!(g.cell_state((2, 2)), CellState::Empty);
 
     assert_eq!(
-        g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state }),
+        g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state, producer: None }),
         Err(GridError::CellUnavailable)
     );
 
@@ -219,7 +219,7 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
     };
 
     assert_eq!(
-        g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1_new, state: s1_new_state }),
+        g.add_entity((1, 1), Entity::Structure { id: Uuid::new_v4(), props: s1_new, state: s1_new_state, producer: None }),
         Ok(CellState::Empty)
     );
 

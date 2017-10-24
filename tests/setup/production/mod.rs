@@ -3,7 +3,7 @@ use owe::entities::resource;
 use owe::entities::structure;
 use owe::entities::walker;
 use owe::entities::Entity;
-use owe::production::{Commodity, CommodityProducer, WalkerProducer};
+use owe::production::Commodity;
 use owe::production::exchange::CommodityExchange;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -100,8 +100,8 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
 
     let r1_state = resource::ResourceState { current_level: 5 };
 
-    let e0 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
-    let e1 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
+    let e0 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state, producer: None });
+    let e1 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state, producer: None });
     let e2 = Rc::new(Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
     let e3 = Rc::new(Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
     let e4 = Rc::new(Entity::Road);
@@ -110,49 +110,8 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
     let e7 = Rc::new(Entity::Roadblock);
     let e8 = Rc::new(Entity::Doodad { props: d0 });
     let e9 = Rc::new(Entity::Doodad { props: d1 });
-    let e10 = Rc::new(Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
-    let e11 = Rc::new(Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
+    let e10 = Rc::new(Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state, producer: None });
+    let e11 = Rc::new(Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state, producer: None });
 
     vec![e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]
-}
-
-pub struct TestCommodityProducer0 {}
-
-impl CommodityProducer for TestCommodityProducer0 {
-    fn produce_commodity(&mut self, entity: &Entity) -> Option<Commodity> {
-        match entity {
-            &Entity::Structure { ref state, ref props, .. } => {
-                if props.max_employees == state.current_employees {
-                    Some(Commodity { name: "c0".to_owned(), amount: 100 })
-                } else {
-                    None
-                }
-            }
-
-            _ => None //does nothing
-        }
-    }
-}
-
-pub struct TestCommodityProducer1 {
-    max_progress: u8,
-    current_progress: u8
-}
-
-impl CommodityProducer for TestCommodityProducer1 {
-    fn produce_commodity(&mut self, entity: &Entity) -> Option<Commodity> {
-        match entity {
-            &Entity::Structure { .. } => {
-                if self.max_progress < self.current_progress {
-                    self.current_progress += 1;
-                    None
-                } else {
-                    self.current_progress = 0;
-                    Some(Commodity { name: "c1".to_owned(), amount: 1 })
-                }
-            }
-
-            _ => None //does nothing
-        }
-    }
 }

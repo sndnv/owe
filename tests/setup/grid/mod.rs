@@ -5,6 +5,7 @@ use owe::entities::structure;
 use owe::entities::walker;
 use owe::entities::Entity;
 use owe::effects::Effect;
+use owe::production::{Commodity, Producer};
 use setup::effects::*;
 use std::rc::Rc;
 use std::collections::HashMap;
@@ -82,11 +83,33 @@ pub fn grid_default() -> grid::Grid {
     let _ = g.add_entity((0, 0), Entity::Doodad { props: d0 });
     let _ = g.add_entity((1, 0), Entity::Doodad { props: d1 });
 
-    let _ = g.add_entity((2, 0), Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
-    let _ = g.add_entity((0, 1), Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
+    let _ = g.add_entity((2, 0), Entity::Resource {
+        id: Uuid::new_v4(),
+        props: r0,
+        state: r0_state,
+        producer: Some(Box::new(TestCommodityProducer0 {}))
+    });
 
-    let _ = g.add_entity((2, 1), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
-    let _ = g.add_entity((0, 2), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
+    let _ = g.add_entity((0, 1), Entity::Resource {
+        id: Uuid::new_v4(),
+        props: r1,
+        state: r1_state,
+        producer: Some(Box::new(TestCommodityProducer1 { max_progress: 100, current_progress: 0 }))
+    });
+
+    let _ = g.add_entity((2, 1), Entity::Structure {
+        id: Uuid::new_v4(),
+        props: s0,
+        state: s0_state,
+        producer: None
+    });
+
+    let _ = g.add_entity((0, 2), Entity::Structure {
+        id: Uuid::new_v4(),
+        props: s1,
+        state: s1_state,
+        producer: None
+    });
 
     let _ = g.add_entity((1, 2), Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
     let _ = g.add_entity((2, 2), Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
@@ -194,14 +217,54 @@ pub fn grid_large() -> grid::Grid {
     let _ = g.add_entity((2, 3), Entity::Doodad { props: d1 });
     let _ = g.add_entity((3, 3), Entity::Doodad { props: d2 });
 
-    let _ = g.add_entity((0, 3), Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state });
-    let _ = g.add_entity((0, 4), Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state });
-    let _ = g.add_entity((1, 4), Entity::Resource { id: Uuid::new_v4(), props: r2, state: r2_state });
+    let _ = g.add_entity((0, 3), Entity::Resource {
+        id: Uuid::new_v4(),
+        props: r0,
+        state: r0_state,
+        producer: Some(Box::new(TestCommodityProducer0 {}))
+    });
 
-    let _ = g.add_entity((2, 0), Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state });
-    let _ = g.add_entity((2, 1), Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state });
-    let _ = g.add_entity((2, 2), Entity::Structure { id: Uuid::new_v4(), props: s2, state: s2_state });
-    let _ = g.add_entity((4, 1), Entity::Structure { id: Uuid::new_v4(), props: s3, state: s3_state });
+    let _ = g.add_entity((0, 4), Entity::Resource {
+        id: Uuid::new_v4(),
+        props: r1,
+        state: r1_state,
+        producer: Some(Box::new(TestCommodityProducer1 { max_progress: 100, current_progress: 0 }))
+    });
+
+    let _ = g.add_entity((1, 4), Entity::Resource {
+        id: Uuid::new_v4(),
+        props: r2,
+        state: r2_state,
+        producer: None
+    });
+
+    let _ = g.add_entity((2, 0), Entity::Structure {
+        id: Uuid::new_v4(),
+        props: s0,
+        state: s0_state,
+        producer: None
+    });
+
+    let _ = g.add_entity((2, 1), Entity::Structure {
+        id: Uuid::new_v4(),
+        props: s1,
+        state: s1_state,
+        producer: None
+    });
+
+    let _ = g.add_entity((2, 2), Entity::Structure {
+        id: Uuid::new_v4(),
+        props: s2,
+        state: s2_state,
+        producer: None
+    });
+
+    let _ = g.add_entity((4, 1), Entity::Structure {
+        id: Uuid::new_v4(),
+        props: s3,
+        state: s3_state,
+        producer: None
+    });
 
     let _ = g.add_entity((0, 2), Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
     let _ = g.add_entity((4, 4), Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
@@ -223,4 +286,64 @@ pub fn grid_with_effects() -> (grid::Grid, grid::Cursor, Vec<Rc<Effect>>) {
     let effects = effects_default();
 
     (g, gc, effects)
+}
+
+
+#[derive(Clone)]
+pub struct TestCommodityProducer0 {}
+
+impl Producer for TestCommodityProducer0 {
+    fn produce_commodity(&mut self, entity: &Entity) -> Option<Commodity> {
+        match entity {
+            &Entity::Structure { ref state, ref props, .. } => {
+                if props.max_employees == state.current_employees {
+                    Some(Commodity { name: "c0".to_owned(), amount: 100 })
+                } else {
+                    None
+                }
+            }
+
+            _ => None //does nothing
+        }
+    }
+
+    fn produce_walker(&mut self, _: &Entity) -> Option<walker::WalkerProperties> {
+        None //no walker is produced
+    }
+
+    fn clone_boxed(&self) -> Box<Producer> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone)]
+pub struct TestCommodityProducer1 {
+    max_progress: u8,
+    current_progress: u8
+}
+
+impl Producer for TestCommodityProducer1 {
+    fn produce_commodity(&mut self, entity: &Entity) -> Option<Commodity> {
+        match entity {
+            &Entity::Structure { .. } => {
+                if self.max_progress < self.current_progress {
+                    self.current_progress += 1;
+                    None
+                } else {
+                    self.current_progress = 0;
+                    Some(Commodity { name: "c1".to_owned(), amount: 1 })
+                }
+            }
+
+            _ => None //does nothing
+        }
+    }
+
+    fn produce_walker(&mut self, _: &Entity) -> Option<walker::WalkerProperties> {
+        None //no walker is produced
+    }
+
+    fn clone_boxed(&self) -> Box<Producer> {
+        Box::new(self.clone())
+    }
 }
