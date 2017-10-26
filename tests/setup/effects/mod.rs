@@ -45,8 +45,8 @@ impl effects::Effect for TestEffect2 {
     fn apply(&self, entity: &mut Entity) -> () {
         match entity {
             &mut Entity::Resource { ref mut state, .. } => {
-                if state.current_level > 0 {
-                    state.current_level -= 1;
+                if state.current_amount > 1 {
+                    state.current_amount -= 2;
                 }
             }
 

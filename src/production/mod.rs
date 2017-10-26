@@ -4,15 +4,24 @@ use entities::Entity;
 use entities::walker::WalkerProperties;
 use std::fmt;
 
-#[derive(Debug)]
 pub struct Commodity {
     pub name: String,
     pub amount: u32
 }
 
+pub struct ProductionStage {
+    pub commodity: Commodity,
+    pub used: Vec<Commodity>,
+    pub required: Vec<Commodity>
+}
+
 pub trait Producer {
-    fn produce_commodity(&mut self, entity: &Entity) -> Option<Commodity>;
+    fn produce_commodity(&mut self, entity: &Entity) -> Option<ProductionStage>;
+
+    //TODO - + return walker effects
+    //TODO - + pass exchange to fn
     fn produce_walker(&mut self, entity: &Entity) -> Option<WalkerProperties>;
+
     fn clone_boxed(&self) -> Box<Producer>;
 }
 

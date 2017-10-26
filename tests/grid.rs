@@ -453,7 +453,7 @@ fn grid_with_entities_should_calculate_paths_between_cells() {
 
 #[test]
 fn grid_should_add_effects_to_cell() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
     assert_eq!(g.add_cell_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
@@ -470,7 +470,7 @@ fn grid_should_add_effects_to_cell() {
 
 #[test]
 fn grid_should_remove_effects_from_cell() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
     assert_eq!(g.add_cell_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
@@ -496,7 +496,7 @@ fn grid_should_remove_effects_from_cell() {
 
 #[test]
 fn grid_should_clear_effects_from_cell() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
     assert_eq!(g.add_cell_effect((0, 0), effects[1].clone()), Ok(CellState::Occupied));
@@ -521,7 +521,7 @@ fn grid_should_clear_effects_from_cell() {
 
 #[test]
 fn grid_should_not_allow_duplicate_effects_for_cell() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Ok(CellState::Occupied));
     assert_eq!(g.add_cell_effect((0, 0), effects[0].clone()), Err(GridError::EffectPresent));
@@ -529,28 +529,28 @@ fn grid_should_not_allow_duplicate_effects_for_cell() {
 
 #[test]
 fn grid_should_not_remove_effects_not_in_cell() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.remove_cell_effect((0, 0), &effects[0]), Err(GridError::EffectMissing));
 }
 
 #[test]
 fn grid_should_not_add_effects_outside_of_bounds() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_cell_effect((6, 42), effects[0].clone()), Err(GridError::CellUnavailable));
 }
 
 #[test]
 fn grid_should_not_remove_effects_outside_of_bounds() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.remove_cell_effect((6, 42), &effects[0]), Err(GridError::CellUnavailable));
 }
 
 #[test]
 fn grid_should_add_global_effects() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_global_effect(effects[0].clone()), Ok(()));
     assert_eq!(g.add_global_effect(effects[1].clone()), Ok(()));
@@ -563,7 +563,7 @@ fn grid_should_add_global_effects() {
 
 #[test]
 fn grid_should_remove_global_effects() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_global_effect(effects[0].clone()), Ok(()));
     assert_eq!(g.add_global_effect(effects[1].clone()), Ok(()));
@@ -582,7 +582,7 @@ fn grid_should_remove_global_effects() {
 
 #[test]
 fn grid_should_clear_global_effects() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_global_effect(effects[0].clone()), Ok(()));
     assert_eq!(g.add_global_effect(effects[1].clone()), Ok(()));
@@ -601,7 +601,7 @@ fn grid_should_clear_global_effects() {
 
 #[test]
 fn grid_should_not_allow_duplicate_global_effects() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_global_effect(effects[0].clone()), Ok(()));
     assert_eq!(g.add_global_effect(effects[0].clone()), Err(GridError::EffectPresent));
@@ -609,114 +609,114 @@ fn grid_should_not_allow_duplicate_global_effects() {
 
 #[test]
 fn grid_should_not_remove_nonexistent_global_effects() {
-    let (mut g, _, effects) = setup::grid::grid_with_effects();
+    let (mut g, _, _, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.remove_global_effect(&effects[1]), Err((GridError::EffectMissing)));
 }
 
 #[test]
 fn cursor_should_move_up() {
-    let (mut g, mut gc) = setup::grid::grid_with_direction_from(Direction::Up, (2, 2));
+    let (mut g, mut gc, mut e) = setup::grid::grid_with_direction_from(Direction::Up, (2, 2));
 
     assert_eq!(gc.position(), (2, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 2));
 }
 
 #[test]
 fn cursor_should_move_down() {
-    let (mut g, mut gc) = setup::grid::grid_with_direction_from(Direction::Down, (0, 0));
+    let (mut g, mut gc, mut e) = setup::grid::grid_with_direction_from(Direction::Down, (0, 0));
 
     assert_eq!(gc.position(), (0, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 0));
 }
 
 #[test]
 fn cursor_should_move_left() {
-    let (mut g, mut gc) = setup::grid::grid_with_direction_from(Direction::Left, (2, 2));
+    let (mut g, mut gc, mut e) = setup::grid::grid_with_direction_from(Direction::Left, (2, 2));
 
     assert_eq!(gc.position(), (2, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 2));
 }
 
 #[test]
 fn cursor_should_move_right() {
-    let (mut g, mut gc) = setup::grid::grid_with_direction_from(Direction::Right, (0, 0));
+    let (mut g, mut gc, mut e) = setup::grid::grid_with_direction_from(Direction::Right, (0, 0));
 
     assert_eq!(gc.position(), (0, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 0));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 1));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (1, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (2, 2));
-    gc.process_and_advance(&mut g);
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     assert_eq!(gc.position(), (0, 0));
 }
 
 #[test]
 fn cursor_should_process_effects() {
-    let (mut g, mut gc, effects) = setup::grid::grid_with_effects();
+    let (mut g, mut gc, mut e, effects) = setup::grid::grid_with_effects();
 
     assert_eq!(g.add_global_effect(effects[1].clone()), Ok(()));
 
@@ -737,7 +737,7 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
 
-    gc.process_and_advance(&mut g); //process (0, 0) and go to (1, 0)
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(())); //process (0, 0) and go to (1, 0)
 
     assert_eq!(gc.position(), (1, 0));
     assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
@@ -751,7 +751,7 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
 
-    gc.process_and_advance(&mut g); //process (1, 0) and go to (2, 0)
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(())); //process (1, 0) and go to (2, 0)
 
     assert_eq!(gc.position(), (2, 0));
     assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
@@ -765,7 +765,7 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
 
-    gc.process_and_advance(&mut g); //process (2, 0) and go to (0, 1)
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(())); //process (2, 0) and go to (0, 1)
 
     assert_eq!(gc.position(), (0, 1));
     assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
@@ -779,7 +779,7 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
 
-    gc.process_and_advance(&mut g); //process (0, 1) and go to (1, 1)
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(())); //process (0, 1) and go to (1, 1)
 
     assert_eq!(gc.position(), (1, 1));
     assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
@@ -793,7 +793,7 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
 
-    gc.process_and_advance(&mut g); //process (1, 1) and go to (2, 1)
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(())); //process (1, 1) and go to (2, 1)
 
     assert_eq!(gc.position(), (2, 1));
     assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
@@ -807,7 +807,7 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(None));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(1)));
 
-    gc.process_and_advance(&mut g); //process (2, 1) and go to (0, 2)
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(())); //process (2, 1) and go to (0, 2)
 
     assert_eq!(gc.position(), (0, 2));
     assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
@@ -816,12 +816,12 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
     assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
     assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
-    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(0));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(1));
     assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(Some(3)));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(0)));
 
-    gc.process_and_advance(&mut g); //process (0, 2) and go to (1, 2)
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(())); //process (0, 2) and go to (1, 2)
 
     assert_eq!(gc.position(), (1, 2));
     assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
@@ -830,12 +830,12 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
     assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
     assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
-    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(0));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(1));
     assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(Some(3)));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(0)));
 
-    gc.process_and_advance(&mut g); //process (1, 2) and go to (2, 2)
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(())); //process (1, 2) and go to (2, 2)
 
     assert_eq!(gc.position(), (2, 2));
     assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
@@ -844,12 +844,12 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
     assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 0, fire: 0 }));
     assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 3 }));
-    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(0));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(1));
     assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(Some(3)));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(0)));
 
-    gc.process_and_advance(&mut g); //process (2, 2) and go to (0, 0)
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(())); //process (2, 2) and go to (0, 0)
 
     assert_eq!(gc.position(), (0, 0));
     assert_eq!(extract::doodad::name(g.entity((0, 0))), Some("updated doodad name".to_owned()));
@@ -858,13 +858,13 @@ fn cursor_should_process_effects() {
     assert_eq!(extract::structure::employees(g.entity((0, 2))), Some(1));
     assert_eq!(extract::structure::risk(g.entity((2, 1))), Some(structure::Risk { damage: 1, fire: 5 }));
     assert_eq!(extract::structure::risk(g.entity((0, 2))), Some(structure::Risk { damage: 10, fire: 8 }));
-    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(0));
+    assert_eq!(extract::resource::level(g.entity((2, 0))), Some(1));
     assert_eq!(extract::resource::level(g.entity((0, 1))), Some(5));
     assert_eq!(extract::walker::life(g.entity((1, 2))), Some(Some(2)));
     assert_eq!(extract::walker::life(g.entity((2, 2))), Some(Some(0)));
 
     for _ in 0..9 {
-        gc.process_and_advance(&mut g);
+        assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
     }
 
     assert_eq!(gc.position(), (0, 0));
@@ -887,7 +887,166 @@ fn cursor_should_process_enqueued_actions() {
 
 #[test]
 fn cursor_should_process_resource_production() {
-    //TODO - implement
+    let (mut g, mut gc, mut e) = setup::grid::grid_with_production();
+
+    assert_eq!(e.producers_of("c0").len(), 1); //at (2, 1)
+    assert_eq!(e.producers_of("c1").len(), 1); //at (0, 2)
+    assert_eq!(e.producers_of("c2").len(), 1); //at (2, 0)
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 0);
+    assert_eq!(e.amount_available_of("c0"), 0);
+    assert_eq!(e.amount_available_of("c1"), 0);
+    assert_eq!(e.amount_available_of("c2"), 0);
+    assert_eq!(e.amount_used_of("c0"), 0);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (0, 0));
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 0);
+    assert_eq!(e.amount_available_of("c0"), 0);
+    assert_eq!(e.amount_available_of("c1"), 0);
+    assert_eq!(e.amount_available_of("c2"), 0);
+    assert_eq!(e.amount_used_of("c0"), 0);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (1, 0));
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 0);
+    assert_eq!(e.amount_available_of("c0"), 0);
+    assert_eq!(e.amount_available_of("c1"), 0);
+    assert_eq!(e.amount_available_of("c2"), 0);
+    assert_eq!(e.amount_used_of("c0"), 0);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (2, 0));
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 0);
+    assert_eq!(e.amount_available_of("c0"), 0);
+    assert_eq!(e.amount_available_of("c1"), 0);
+    assert_eq!(e.amount_available_of("c2"), 1);
+    assert_eq!(e.amount_used_of("c0"), 0);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (0, 1));
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 0);
+    assert_eq!(e.amount_available_of("c0"), 0);
+    assert_eq!(e.amount_available_of("c1"), 0);
+    assert_eq!(e.amount_available_of("c2"), 1);
+    assert_eq!(e.amount_used_of("c0"), 0);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (1, 1));
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 0);
+    assert_eq!(e.amount_available_of("c0"), 0);
+    assert_eq!(e.amount_available_of("c1"), 0);
+    assert_eq!(e.amount_available_of("c2"), 1);
+    assert_eq!(e.amount_used_of("c0"), 0);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (2, 1));
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 3);
+    assert_eq!(e.amount_available_of("c0"), 100);
+    assert_eq!(e.amount_available_of("c1"), 0);
+    assert_eq!(e.amount_available_of("c2"), 1);
+    assert_eq!(e.amount_used_of("c0"), 0);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (0, 2));
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 3);
+    assert_eq!(e.amount_available_of("c0"), 100);
+    assert_eq!(e.amount_available_of("c1"), 1);
+    assert_eq!(e.amount_available_of("c2"), 1);
+    assert_eq!(e.amount_used_of("c0"), 2);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (1, 2));
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 3);
+    assert_eq!(e.amount_available_of("c0"), 100);
+    assert_eq!(e.amount_available_of("c1"), 1);
+    assert_eq!(e.amount_available_of("c2"), 1);
+    assert_eq!(e.amount_used_of("c0"), 2);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (2, 2));
+    assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 3);
+    assert_eq!(e.amount_available_of("c0"), 100);
+    assert_eq!(e.amount_available_of("c1"), 1);
+    assert_eq!(e.amount_available_of("c2"), 1);
+    assert_eq!(e.amount_used_of("c0"), 2);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    assert_eq!(gc.position(), (0, 0));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 3);
+    assert_eq!(e.amount_available_of("c0"), 100);
+    assert_eq!(e.amount_available_of("c1"), 1);
+    assert_eq!(e.amount_available_of("c2"), 1);
+    assert_eq!(e.amount_used_of("c0"), 2);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
+
+    for _ in 0..9 {
+        assert_eq!(gc.process_and_advance(&mut g, &mut e), Ok(()));
+    }
+
+    assert_eq!(gc.position(), (0, 0));
+
+    assert_eq!(e.amount_required_of("c0"), 0);
+    assert_eq!(e.amount_required_of("c1"), 0);
+    assert_eq!(e.amount_required_of("c2"), 3); //TODO
+    assert_eq!(e.amount_available_of("c0"), 200); //TODO
+    assert_eq!(e.amount_available_of("c1"), 2); //TODO
+    assert_eq!(e.amount_available_of("c2"), 2); //TODO
+    assert_eq!(e.amount_used_of("c0"), 4);
+    assert_eq!(e.amount_used_of("c1"), 0);
+    assert_eq!(e.amount_used_of("c2"), 0);
 }
 
 #[test]

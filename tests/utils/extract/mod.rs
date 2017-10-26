@@ -46,11 +46,11 @@ pub mod resource {
     use std::rc::Rc;
     use owe::entities::Entity;
 
-    pub fn level(entity: Option<Rc<Entity>>) -> Option<u8> {
+    pub fn level(entity: Option<Rc<Entity>>) -> Option<u32> {
         entity.and_then(|entity| {
             match *entity {
                 Entity::Resource { ref state, .. } => {
-                    Some(state.current_level)
+                    Some(state.current_amount)
                 }
                 _ => None
             }

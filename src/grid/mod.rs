@@ -4,6 +4,7 @@ use pathfinding::dijkstra;
 use entities::Entity;
 use entities::structure;
 use effects::Effect;
+use production::exchange::{CommodityExchange, CommodityState, ExchangeError};
 use std::fmt;
 
 #[derive(Clone)]
@@ -128,6 +129,8 @@ impl Grid {
                     }
                 }
             }
+
+            //TODO - support one/multiple walkers & roads/roadblocks/doodads in same cell
 
             _ => {
                 Err(GridError::CellUnavailable)
@@ -343,6 +346,12 @@ impl Grid {
     }
 }
 
+#[derive(Eq, PartialEq, Debug)]
+pub enum CursorError {
+    ForGrid { e: GridError },
+    ForExchange { errors: Vec<ExchangeError> }
+}
+
 pub struct Cursor {
     cell: (usize, usize),
     direction: Direction,
@@ -465,7 +474,7 @@ impl Cursor {
     }
 
     //processes all effects for the current cell and moves to the next cell in the grid
-    pub fn process_and_advance(&mut self, grid: &mut Grid) -> () {
+    pub fn process_and_advance(&mut self, grid: &mut Grid, exchange: &mut CommodityExchange) -> Result<(), CursorError> {
         let cell_x = self.cell.0 as isize;
         let cell_y = self.cell.1 as isize;
         let effect_range = self.range as isize;
@@ -516,15 +525,104 @@ impl Cursor {
                     });
                 }
             }
+
+            //TODO - process movement
+            //TODO - process action queue
+            //TODO - process desirability changes for cells
         }
 
-        //TODO - process resource production
-        //TODO - process walker production
-        //TODO - process action queue
-        //TODO - process desirability changes for cells
-        //TODO - process movement
+        let processing_result = {
+            //process current cell production and state updates
+            let affected_cell: &mut Cell = grid.cells.get_mut(self.cell).unwrap();
+            affected_cell.entity.clone().map(|e| {
+                let mut updated_entity = (*e).clone();
+
+                let exchange_updates = match updated_entity {
+                    Entity::Resource { ref props, ref mut producer, ref mut state, .. } => {
+                        producer.as_mut().map(|mut p| {
+                            let exchange_update = p.produce_commodity(&*e).map(|stage| {
+                                if state.current_amount >= stage.commodity.amount {
+                                    state.current_amount -= stage.commodity.amount;
+                                } else {
+                                    state.current_amount = 0;
+                                }
+
+                                vec![(stage.commodity, CommodityState::Available)]
+                            });
+
+                            props.replenish_amount.map(|amount| {
+                                if state.current_amount + amount < props.max_amount {
+                                    state.current_amount += amount;
+                                } else {
+                                    state.current_amount = props.max_amount;
+                                }
+                            });
+
+                            exchange_update
+                        }).unwrap_or(None)
+                    }
+
+                    Entity::Structure { ref mut producer, ref mut state, .. } => {
+                        producer.as_mut().map(|mut p| {
+                            let exchange_update = p.produce_commodity(&*e).map(|stage| {
+                                let existing = state.commodities.entry(stage.commodity.name.clone()).or_insert(0);
+                                *existing += stage.commodity.amount;
+
+                                let mut updates = stage.required.into_iter().map(|c| (c, CommodityState::Required)).collect::<Vec<_>>();
+                                updates.extend(stage.used.into_iter().map(|c| (c, CommodityState::Used)).collect::<Vec<_>>());
+                                updates.push((stage.commodity, CommodityState::Available));
+
+                                updates
+                            });
+
+                            p.produce_walker(&*e).map(|walker| {
+                                //TODO - add walker to grid
+                                //TODO - add walker effects to grid
+                            });
+
+                            //TODO - update current employees count
+
+                            exchange_update
+                        }).unwrap_or(None)
+                    }
+
+                    Entity::Walker { ref mut state, .. } => {
+                        //TODO - update state
+                        //TODO - process interaction with nearby entities
+                        //       (work, attack, get/leave commodities)
+                        None
+                    }
+
+                    _ => None //do nothing
+                }.unwrap_or(Vec::new());
+
+                let updated_entity = Rc::new(updated_entity);
+                let failed_updates = exchange_updates.into_iter()
+                    .map(|update| {
+                        exchange
+                            .update_state(updated_entity.clone(), &update.0, update.1)
+                    })
+                    .filter_map(|result| {
+                        match result {
+                            Ok(()) => None,
+                            Err(e) => Some(e)
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                affected_cell.entity = Some(updated_entity);
+
+                if failed_updates.is_empty() {
+                    Ok(())
+                } else {
+                    Err(CursorError::ForExchange { errors: failed_updates })
+                }
+            }).unwrap_or(Ok(()))
+        };
 
         //resets the cursor position
         self.cell = next_cell;
+
+        processing_result
     }
 }

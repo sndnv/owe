@@ -86,19 +86,19 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
 
     let r0 = resource::ResourceProperties {
         name: "r0".to_owned(),
-        max_level: 10,
-        replenish_time: Some(15)
+        max_amount: 10,
+        replenish_amount: Some(15)
     };
 
     let r1 = resource::ResourceProperties {
         name: "r1".to_owned(),
-        max_level: 10,
-        replenish_time: None
+        max_amount: 10,
+        replenish_amount: None
     };
 
-    let r0_state = resource::ResourceState { current_level: 0 };
+    let r0_state = resource::ResourceState { current_amount: 0 };
 
-    let r1_state = resource::ResourceState { current_level: 5 };
+    let r1_state = resource::ResourceState { current_amount: 5 };
 
     let e0 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state, producer: None });
     let e1 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state, producer: None });
