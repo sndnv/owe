@@ -1040,10 +1040,10 @@ fn cursor_should_process_resource_production() {
 
     assert_eq!(e.amount_required_of("c0"), 0);
     assert_eq!(e.amount_required_of("c1"), 0);
-    assert_eq!(e.amount_required_of("c2"), 3); //TODO
-    assert_eq!(e.amount_available_of("c0"), 200); //TODO
-    assert_eq!(e.amount_available_of("c1"), 2); //TODO
-    assert_eq!(e.amount_available_of("c2"), 2); //TODO
+    assert_eq!(e.amount_required_of("c2"), 3);
+    assert_eq!(e.amount_available_of("c0"), 100);
+    assert_eq!(e.amount_available_of("c1"), 1);
+    assert_eq!(e.amount_available_of("c2"), 1);
     assert_eq!(e.amount_used_of("c0"), 4);
     assert_eq!(e.amount_used_of("c1"), 0);
     assert_eq!(e.amount_used_of("c2"), 0);

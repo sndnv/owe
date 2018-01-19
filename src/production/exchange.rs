@@ -61,7 +61,9 @@ impl CommodityExchange {
                     .entry(commodity.name.clone()).or_insert_with(|| HashMap::new())
                     .entry(id) {
                     Entry::Occupied(entry) => {
-                        entry.into_mut().1 = commodity.amount;
+                        let entry = entry.into_mut();
+                        entry.0 = Rc::downgrade(&entity);
+                        entry.1 = commodity.amount;
                     }
 
                     Entry::Vacant(entry) => {
