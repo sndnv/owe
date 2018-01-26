@@ -15,6 +15,14 @@ pub enum State {
 }
 
 #[derive(PartialEq, Clone, Debug)]
+pub enum NamedEntityType {
+    Doodad,
+    Resource,
+    Structure,
+    Walker
+}
+
+#[derive(PartialEq, Clone, Debug)]
 pub enum Entity {
     Road,
 

@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use ndarray::Array2;
 use pathfinding::dijkstra;
-use entities::Entity;
+use entities::{Entity, NamedEntityType};
 use entities::structure;
 use effects::Effect;
 use production::exchange::{CommodityExchange, CommodityState, ExchangeError};
@@ -253,6 +253,45 @@ impl Grid {
             .and_then(|cell| {
                 cell.entity.as_ref().map(|entity| entity.clone())
             })
+    }
+
+    pub fn find_first_adjacent_road(&self, next_to: (usize, usize)) -> Option<(usize, usize)> {
+        None //TODO - implement
+    }
+
+    pub fn find_closest_named_entity(&self, entity_type: NamedEntityType, with_name: String, close_to: (usize, usize)) -> Option<(usize, usize)> {
+        let (x1, y1) = close_to;
+
+        let closest: (Option<(usize, usize)>, f64) = self.find_named_entities(entity_type, with_name).iter().fold(
+            (None, 0.0),
+            |acc,
+             &(x2, y2): &(usize, usize)| {
+            let distance = (((x2 - x1).pow(2) + (y2 - y1).pow(2)) as f64).sqrt();
+
+            if distance < acc.1 { (Some((x2, y2)), distance) } else { acc }
+        });
+
+        closest.0
+    }
+
+    pub fn find_named_entities(&self, entity_type: NamedEntityType, with_name: String) -> Vec<(usize, usize)> {
+        self.cells.indexed_iter().fold(vec![], |mut acc: Vec<(usize, usize)>, (index, cell)| {
+            match cell.entity.clone() {
+                Some(entity) => {
+                    match *entity {
+                        Entity::Doodad { ref props, .. } if entity_type == NamedEntityType::Doodad && props.name == with_name => acc.push(index),
+                        Entity::Resource { ref props, .. } if entity_type == NamedEntityType::Resource && props.name == with_name => acc.push(index),
+                        Entity::Structure { ref props, .. } if entity_type == NamedEntityType::Structure && props.name == with_name => acc.push(index),
+                        Entity::Walker { ref props, .. } if entity_type == NamedEntityType::Walker && props.name == with_name => acc.push(index),
+                        _ => ()
+                    }
+                }
+
+                None => ()
+            }
+
+            acc
+        })
     }
 
     pub fn cell_state(&self, at: (usize, usize)) -> CellState {

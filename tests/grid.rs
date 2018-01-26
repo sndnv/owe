@@ -1053,3 +1053,18 @@ fn cursor_should_process_resource_production() {
 fn cursor_should_process_walker_production() {
     //TODO - implement
 }
+
+#[test]
+fn grid_should_find_named_entities() {
+    //TODO - implement
+}
+
+#[test]
+fn grid_should_find_closest_named_entity() {
+    //TODO - implement
+}
+
+#[test]
+fn grid_should_find_first_adjacent_road() {
+    //TODO - implement
+}
