@@ -257,6 +257,34 @@ impl Grid {
     }
 
     pub fn find_first_adjacent_road(&self, next_to: (usize, usize)) -> Option<(usize, usize)> {
+        let _: Option<Vec<(usize, usize)>> = self.cells.get(next_to)
+            .and_then(|cell: &Cell| cell.entity.as_ref().map(|entity| (entity, cell.parent.unwrap())))
+            .and_then(|(entity, parent)| {
+                match **entity {
+                    Entity::Structure { ref props, .. } => Some(Self::entity_cells(&props.size, parent)),
+                    _ => None
+                }
+            })
+            .map(|entity_cells: Vec<(usize, usize)>| {
+                entity_cells
+                    .into_iter()
+                    .fold(
+                        vec![],
+                        |mut acc: Vec<(usize, usize)>, cell| {
+                            let mut neighbours: Vec<(usize, usize)> = Self::neighbours_of(cell).into_iter()
+                                .filter(|cell| cell.is_some())
+                                .map(|cell| cell.unwrap()).collect();
+
+                            acc.append(&mut neighbours);
+                            acc
+                        })
+            });
+
+        //TODO - distinct neighbour tiles
+        //TODO - remove own tiles
+        //TODO - get entities for tiles
+        //TODO - get first road
+
         None //TODO - implement
     }
 
@@ -350,11 +378,10 @@ impl Grid {
         }
     }
 
-    pub fn neighbors_of(&self, cell: (usize, usize)) -> Vec<(usize, usize)> {
+    pub fn neighbours_of(cell: (usize, usize)) -> Vec<Option<(usize, usize)>> {
         let (x, y) = cell;
 
-        //TODO - allow corner neighbors only for specific walkers that don't need roads
-        let neighbors = vec![
+        vec![
             if x > 0 { Some((x - 1, y + 1)) } else { None },
             Some((x, y + 1)),
             Some((x + 1, y + 1)),
@@ -363,9 +390,15 @@ impl Grid {
             if x > 0 && y > 0 { Some((x - 1, y - 1)) } else { None },
             if y > 0 { Some((x, y - 1)) } else { None },
             if y > 0 { Some((x + 1, y - 1)) } else { None }
-        ];
+        ]
+    }
 
-        neighbors.into_iter()
+    pub fn passable_neighbours_of(&self, cell: (usize, usize)) -> Vec<(usize, usize)> {
+        let (x, y) = cell;
+
+        //TODO - allow corner neighbors only for specific walkers that don't need roads
+
+        Self::neighbours_of(cell).into_iter()
             .filter(|opt| opt.map_or(false, |c| self.is_cell_passable(c)))
             .map(|opt| opt.unwrap())
             .collect()
@@ -375,7 +408,7 @@ impl Grid {
         if self.is_cell_in_grid(start) && self.is_cell_in_grid(end) {
             dijkstra(
                 &start,
-                |cell| self.neighbors_of(*cell).into_iter().map(|c| (c, 1)),
+                |cell| self.passable_neighbours_of(*cell).into_iter().map(|c| (c, 1)),
                 |cell| *cell == end
             )
         } else {

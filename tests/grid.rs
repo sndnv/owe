@@ -283,47 +283,47 @@ fn grid_without_entities_should_report_correct_cell_neighbors() {
     let g = setup::grid::grid_empty();
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((0, 0))),
+        sort_cells(&g.passable_neighbours_of((0, 0))),
         sort_cells(&vec![(1, 0), (0, 1), (1, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((1, 0))),
+        sort_cells(&g.passable_neighbours_of((1, 0))),
         sort_cells(&vec![(0, 0), (2, 0), (0, 1), (1, 1), (2, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((2, 0))),
+        sort_cells(&g.passable_neighbours_of((2, 0))),
         sort_cells(&vec![(1, 0), (1, 1), (2, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((0, 1))),
+        sort_cells(&g.passable_neighbours_of((0, 1))),
         sort_cells(&vec![(0, 0), (1, 0), (1, 1), (0, 2), (1, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((1, 1))),
+        sort_cells(&g.passable_neighbours_of((1, 1))),
         sort_cells(&vec![(0, 0), (1, 0), (2, 0), (0, 1), (2, 1), (0, 2), (1, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((2, 1))),
+        sort_cells(&g.passable_neighbours_of((2, 1))),
         sort_cells(&vec![(1, 0), (2, 0), (1, 1), (1, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((0, 2))),
+        sort_cells(&g.passable_neighbours_of((0, 2))),
         sort_cells(&vec![(0, 1), (1, 1), (1, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((1, 2))),
+        sort_cells(&g.passable_neighbours_of((1, 2))),
         sort_cells(&vec![(0, 1), (1, 1), (2, 1), (0, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((2, 2))),
+        sort_cells(&g.passable_neighbours_of((2, 2))),
         sort_cells(&vec![(1, 1), (2, 1), (1, 2)])
     );
 }
@@ -333,47 +333,47 @@ fn grid_with_entities_should_report_correct_cell_neighbors() {
     let g = setup::grid::grid_default();
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((0, 0))),
+        sort_cells(&g.passable_neighbours_of((0, 0))),
         sort_cells(&vec![(1, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((1, 0))),
+        sort_cells(&g.passable_neighbours_of((1, 0))),
         sort_cells(&vec![(1, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((2, 0))),
+        sort_cells(&g.passable_neighbours_of((2, 0))),
         sort_cells(&vec![(1, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((0, 1))),
+        sort_cells(&g.passable_neighbours_of((0, 1))),
         sort_cells(&vec![(1, 1), (1, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((1, 1))),
+        sort_cells(&g.passable_neighbours_of((1, 1))),
         sort_cells(&vec![(1, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((2, 1))),
+        sort_cells(&g.passable_neighbours_of((2, 1))),
         sort_cells(&vec![(1, 1), (1, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((0, 2))),
+        sort_cells(&g.passable_neighbours_of((0, 2))),
         sort_cells(&vec![(1, 1), (1, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((1, 2))),
+        sort_cells(&g.passable_neighbours_of((1, 2))),
         sort_cells(&vec![(1, 1), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.neighbors_of((2, 2))),
+        sort_cells(&g.passable_neighbours_of((2, 2))),
         sort_cells(&vec![(1, 1), (1, 2)])
     );
 }
