@@ -6,7 +6,7 @@ mod utils;
 
 use uuid::Uuid;
 use std::collections::HashMap;
-use owe::entities::Entity;
+use owe::entities::{Entity, NamedEntityType};
 use owe::entities::{doodad, structure};
 use owe::grid::{Direction, CellState, GridError};
 use utils::extract;
@@ -15,6 +15,10 @@ fn sort_cells(cells: &Vec<(usize, usize)>) -> Vec<(usize, usize)> {
     let mut result = cells.clone();
     result.sort();
     result
+}
+
+fn is_between(value: f64, low: f64, high: f64) -> bool {
+    low <= value && high >= value
 }
 
 #[test]
@@ -86,7 +90,7 @@ fn grid_should_not_add_overlapping_entities() {
         max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
-        structure_type: structure::Type::Housing
+        structure_type: structure::Type::Housing,
     };
 
     let s1 = structure::StructureProperties {
@@ -95,19 +99,19 @@ fn grid_should_not_add_overlapping_entities() {
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
-        structure_type: structure::Type::Industry
+        structure_type: structure::Type::Industry,
     };
 
     let s0_state = structure::StructureState {
         current_employees: 0,
         commodities: HashMap::new(),
-        risk: structure::Risk { damage: 0, fire: 0 }
+        risk: structure::Risk { damage: 0, fire: 0 },
     };
 
     let s1_state = structure::StructureState {
         current_employees: 1,
         commodities: HashMap::new(),
-        risk: structure::Risk { damage: 10, fire: 3 }
+        risk: structure::Risk { damage: 10, fire: 3 },
     };
 
     assert_eq!(
@@ -143,7 +147,7 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
         max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
-        structure_type: structure::Type::Housing
+        structure_type: structure::Type::Housing,
     };
 
     let s1 = structure::StructureProperties {
@@ -152,19 +156,19 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
-        structure_type: structure::Type::Industry
+        structure_type: structure::Type::Industry,
     };
 
     let s0_state = structure::StructureState {
         current_employees: 0,
         commodities: HashMap::new(),
-        risk: structure::Risk { damage: 0, fire: 0 }
+        risk: structure::Risk { damage: 0, fire: 0 },
     };
 
     let s1_state = structure::StructureState {
         current_employees: 1,
         commodities: HashMap::new(),
-        risk: structure::Risk { damage: 10, fire: 3 }
+        risk: structure::Risk { damage: 10, fire: 3 },
     };
 
     assert_eq!(
@@ -209,13 +213,13 @@ fn grid_should_remove_entities_from_all_cells_they_use() {
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
-        structure_type: structure::Type::Industry
+        structure_type: structure::Type::Industry,
     };
 
     let s1_new_state = structure::StructureState {
         current_employees: 1,
         commodities: HashMap::new(),
-        risk: structure::Risk { damage: 10, fire: 3 }
+        risk: structure::Risk { damage: 10, fire: 3 },
     };
 
     assert_eq!(
@@ -1056,12 +1060,193 @@ fn cursor_should_process_walker_production() {
 
 #[test]
 fn grid_should_find_named_entities() {
-    //TODO - implement
+    let mut g = setup::grid::grid_default();
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d0".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r0".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s0".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w0".to_owned()).len(), 1);
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d1".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r1".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s1".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w1".to_owned()).len(), 1);
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d2".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r2".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s2".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w2".to_owned()).len(), 0);
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d3".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r3".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s3".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w3".to_owned()).len(), 0);
+
+    assert_eq!(g.remove_entity((0, 1)), Ok(CellState::Occupied));
+    assert_eq!(g.remove_entity((0, 2)), Ok(CellState::Occupied));
+    assert_eq!(g.remove_entity((1, 2)), Ok(CellState::Occupied));
+    assert_eq!(g.remove_entity((2, 1)), Ok(CellState::Occupied));
+    assert_eq!(g.remove_entity((1, 0)), Ok(CellState::Occupied));
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d0".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r0".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s0".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w0".to_owned()).len(), 0);
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d1".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r1".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s1".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w1".to_owned()).len(), 1);
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d2".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r2".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s2".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w2".to_owned()).len(), 0);
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d3".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r3".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s3".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w3".to_owned()).len(), 0);
+
+
+    let s2_1 = structure::StructureProperties {
+        name: "s2".to_owned(),
+        size: structure::Size { width: 1, height: 1 },
+        max_employees: 5,
+        cost: 1000,
+        desirability: (0, 0, 0, 0, 0, 0),
+        structure_type: structure::Type::Housing,
+    };
+
+    let s2_2 = structure::StructureProperties {
+        name: "s2".to_owned(),
+        size: structure::Size { width: 1, height: 1 },
+        max_employees: 2,
+        cost: 5000,
+        desirability: (1, 2, 3, 4, 5, 6),
+        structure_type: structure::Type::Industry,
+    };
+
+    let s2_state_1 = structure::StructureState {
+        current_employees: 0,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 0, fire: 0 },
+    };
+
+    let s2_state_2 = structure::StructureState {
+        current_employees: 1,
+        commodities: HashMap::new(),
+        risk: structure::Risk { damage: 10, fire: 3 },
+    };
+
+    let d2 = doodad::Doodad { name: "d2".to_owned(), is_removable: false };
+    let d3_1 = doodad::Doodad { name: "d3".to_owned(), is_removable: false };
+    let d3_2 = doodad::Doodad { name: "d3".to_owned(), is_removable: false };
+
+    assert_eq!(g.add_entity((0, 1), Entity::Doodad { props: d2 }), Ok(CellState::Empty));
+    assert_eq!(g.add_entity((1, 2), Entity::Doodad { props: d3_1 }), Ok(CellState::Empty));
+    assert_eq!(g.add_entity((2, 1), Entity::Doodad { props: d3_2 }), Ok(CellState::Empty));
+
+    assert_eq!(
+        g.add_entity((1, 0), Entity::Structure {
+            id: Uuid::new_v4(),
+            props: s2_1,
+            state: s2_state_1,
+            producer: None,
+        }),
+        Ok(CellState::Empty)
+    );
+
+    assert_eq!(
+        g.add_entity((0, 2), Entity::Structure {
+            id: Uuid::new_v4(),
+            props: s2_2,
+            state: s2_state_2,
+            producer: None,
+        }),
+        Ok(CellState::Empty)
+    );
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d0".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r0".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s0".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w0".to_owned()).len(), 0);
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d1".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r1".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s1".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w1".to_owned()).len(), 1);
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d2".to_owned()).len(), 1);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r2".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s2".to_owned()).len(), 2);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w2".to_owned()).len(), 0);
+
+    assert_eq!(g.find_named_entities(NamedEntityType::Doodad, "d3".to_owned()).len(), 2);
+    assert_eq!(g.find_named_entities(NamedEntityType::Resource, "r3".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Structure, "s3".to_owned()).len(), 0);
+    assert_eq!(g.find_named_entities(NamedEntityType::Walker, "w3".to_owned()).len(), 0);
 }
 
 #[test]
 fn grid_should_find_closest_named_entity() {
-    //TODO - implement
+    let mut g = setup::grid::grid_large();
+
+    let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
+    let d3_1 = doodad::Doodad { name: "d3".to_owned(), is_removable: false };
+    let d3_2 = doodad::Doodad { name: "d3".to_owned(), is_removable: false };
+
+    assert_eq!(g.add_entity((4, 0), Entity::Doodad { props: d0 }), Ok(CellState::Empty));
+    assert_eq!(g.add_entity((3, 4), Entity::Doodad { props: d3_1 }), Ok(CellState::Empty));
+    assert_eq!(g.add_entity((4, 3), Entity::Doodad { props: d3_2 }), Ok(CellState::Empty));
+
+
+    let result_0 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), (0, 0));
+    let result_1 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), (1, 3));
+    let result_2 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), (4, 2));
+
+    assert_eq!(result_0.map(|r| r.0), Some((1, 0)));
+    assert_eq!(result_0.map(|r| is_between(r.1, 1.0, 1.0) ), Some(true));
+
+    assert_eq!(result_1.map(|r| r.0), Some((1, 0)));
+    assert_eq!(result_1.map(|r| is_between(r.1, 3.0, 3.0) ), Some(true));
+
+    assert_eq!(result_2.map(|r| r.0), Some((4, 0)));
+    assert_eq!(result_2.map(|r| is_between(r.1, 2.0, 2.0) ), Some(true));
+
+    let result_3 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (3, 0));
+    let result_4 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (1, 3));
+    let result_5 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (0, 2));
+
+    assert_eq!(result_3.map(|r| r.0), Some((4, 3)));
+    assert_eq!(result_3.map(|r| is_between(r.1, 3.16, 3.17) ), Some(true));
+
+    assert_eq!(result_4.map(|r| r.0), Some((3, 4)));
+    assert_eq!(result_4.map(|r| is_between(r.1, 2.23, 2.24) ), Some(true));
+
+    assert_eq!(result_5.map(|r| r.0), Some((3, 4)));
+    assert_eq!(result_5.map(|r| is_between(r.1, 3.60, 3.61) ), Some(true));
+
+    let result_6 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (3, 4));
+    let result_7 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (4, 3));
+    let result_8 = g.find_closest_named_entity(NamedEntityType::Structure, "s0".to_owned(), (2, 0));
+
+    assert_eq!(result_6.map(|r| r.0), Some((3, 4)));
+    assert_eq!(result_6.map(|r| is_between(r.1, 0.0, 0.0) ), Some(true));
+
+    assert_eq!(result_7.map(|r| r.0), Some((4, 3)));
+    assert_eq!(result_7.map(|r| is_between(r.1, 0.0, 0.0) ), Some(true));
+
+    assert_eq!(result_8.map(|r| r.0), Some((2, 0)));
+    assert_eq!(result_8.map(|r| is_between(r.1, 0.0, 0.0) ), Some(true));
+
+    let result_9 = g.find_closest_named_entity(NamedEntityType::Walker, "d1".to_owned(), (0, 0));
+    let result_10 = g.find_closest_named_entity(NamedEntityType::Resource, "d2".to_owned(), (0, 0));
+    let result_11 = g.find_closest_named_entity(NamedEntityType::Structure, "d3".to_owned(), (0, 0));
+
+    assert_eq!(result_9.map(|r| r.0), None);
+    assert_eq!(result_10.map(|r| r.0), None);
+    assert_eq!(result_11.map(|r| r.0), None);
 }
 
 #[test]

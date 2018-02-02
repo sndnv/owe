@@ -1,3 +1,4 @@
+use std::f64;
 use std::rc::Rc;
 use ndarray::Array2;
 use pathfinding::dijkstra;
@@ -259,19 +260,17 @@ impl Grid {
         None //TODO - implement
     }
 
-    pub fn find_closest_named_entity(&self, entity_type: NamedEntityType, with_name: String, close_to: (usize, usize)) -> Option<(usize, usize)> {
+    pub fn find_closest_named_entity(&self, entity_type: NamedEntityType, with_name: String, close_to: (usize, usize)) -> Option<((usize, usize), f64)> {
         let (x1, y1) = close_to;
 
         let closest: (Option<(usize, usize)>, f64) = self.find_named_entities(entity_type, with_name).iter().fold(
-            (None, 0.0),
-            |acc,
-             &(x2, y2): &(usize, usize)| {
-            let distance = (((x2 - x1).pow(2) + (y2 - y1).pow(2)) as f64).sqrt();
+            (None, f64::MAX),
+            |acc, &(x2, y2): &(usize, usize)| {
+                let distance = (((if x1 < x2 {(x2 - x1)} else {x1 - x2}).pow(2) + (if y1 < y2 {(y2 - y1)} else {y1 - y2}).pow(2)) as f64).sqrt();
+                if distance < acc.1 { (Some((x2, y2)), distance) } else { acc }
+            });
 
-            if distance < acc.1 { (Some((x2, y2)), distance) } else { acc }
-        });
-
-        closest.0
+        closest.0.map(|cell| (cell, closest.1))
     }
 
     pub fn find_named_entities(&self, entity_type: NamedEntityType, with_name: String) -> Vec<(usize, usize)> {
@@ -402,7 +401,7 @@ impl Cursor {
         Cursor {
             cell: start,
             direction,
-            range
+            range,
         }
     }
 
