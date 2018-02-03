@@ -28,7 +28,7 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
         max_employees: 5,
         cost: 1000,
         desirability: (0, 0, 0, 0, 0, 0),
-        structure_type: structure::Type::Housing
+        structure_type: structure::Type::Housing,
     };
 
     let s1 = structure::StructureProperties {
@@ -37,63 +37,63 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
         max_employees: 2,
         cost: 5000,
         desirability: (1, 2, 3, 4, 5, 6),
-        structure_type: structure::Type::Industry
+        structure_type: structure::Type::Industry,
     };
 
     let s0_state = structure::StructureState {
         current_employees: 0,
         commodities: HashMap::new(),
-        risk: structure::Risk { damage: 0, fire: 0 }
+        risk: structure::Risk { damage: 0, fire: 0 },
     };
 
     let s1_state = structure::StructureState {
         current_employees: 1,
         commodities: HashMap::new(),
-        risk: structure::Risk { damage: 10, fire: 3 }
+        risk: structure::Risk { damage: 10, fire: 3 },
     };
 
     let w0 = walker::WalkerProperties {
         name: "w0".to_owned(),
         patrol: None,
-        max_life: None
+        max_life: None,
     };
 
     let w1 = walker::WalkerProperties {
         name: "w1".to_owned(),
         patrol: Some(5),
-        max_life: None
+        max_life: None,
     };
 
     let w0_state = walker::WalkerState {
         current_life: None,
-        commodities: HashMap::new()
+        commodities: HashMap::new(),
     };
 
     let w1_state = walker::WalkerState {
         current_life: None,
-        commodities: HashMap::new()
+        commodities: HashMap::new(),
     };
 
     let d0 = doodad::Doodad {
         name: "d0".to_owned(),
-        is_removable: false
+        is_removable: false,
     };
 
     let d1 = doodad::Doodad {
         name: "d1".to_owned(),
-        is_removable: true
+        is_removable: true,
     };
 
     let r0 = resource::ResourceProperties {
         name: "r0".to_owned(),
         max_amount: 10,
-        replenish_amount: Some(15)
+        replenish_amount: Some(15),
     };
 
     let r1 = resource::ResourceProperties {
         name: "r1".to_owned(),
         max_amount: 10,
-        replenish_amount: None
+        replenish_amount: None,
     };
 
     let r0_state = resource::ResourceState { current_amount: 0 };

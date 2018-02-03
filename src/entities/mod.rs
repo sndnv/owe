@@ -11,7 +11,7 @@ pub enum State {
     Active,
     Affected,
     Destroyed,
-    Deleted
+    Deleted,
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -19,7 +19,7 @@ pub enum NamedEntityType {
     Doodad,
     Resource,
     Structure,
-    Walker
+    Walker,
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -34,19 +34,19 @@ pub enum Entity {
         id: Uuid,
         props: resource::ResourceProperties,
         state: resource::ResourceState,
-        producer: Option<Box<Producer>>
+        producer: Option<Box<Producer>>,
     },
 
     Structure {
         id: Uuid,
         props: structure::StructureProperties,
         state: structure::StructureState,
-        producer: Option<Box<Producer>>
+        producer: Option<Box<Producer>>,
     },
 
     Walker {
         id: Uuid,
         props: walker::WalkerProperties,
-        state: walker::WalkerState
-    }
+        state: walker::WalkerState,
+    },
 }

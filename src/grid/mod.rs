@@ -13,7 +13,7 @@ struct Cell {
     entity: Option<Rc<Entity>>,
     parent: Option<(usize, usize)>,
     desirability: i8,
-    active_effects: Vec<Rc<Effect>>
+    active_effects: Vec<Rc<Effect>>,
 }
 
 impl Cell {
@@ -36,7 +36,7 @@ impl fmt::Debug for Cell {
 pub enum CellState {
     Empty,
     Occupied,
-    OutOfBounds
+    OutOfBounds,
 }
 
 #[derive(Debug)]
@@ -44,28 +44,28 @@ pub enum Direction {
     Up,
     Down,
     Left,
-    Right
+    Right,
 }
 
 #[derive(Debug)]
 pub enum TraversalType {
     RoadOnly,
     EmptyOnly,
-    RoadOrEmpty
+    RoadOrEmpty,
 }
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum GridError {
     CellUnavailable,
     EffectPresent,
-    EffectMissing
+    EffectMissing,
 }
 
 pub struct Grid {
     cells: Array2<Cell>,
     active_effects: Vec<Rc<Effect>>,
     width: usize,
-    height: usize
+    height: usize,
 }
 
 impl Grid {
@@ -75,7 +75,7 @@ impl Grid {
             cells: Array2::from_shape_fn((size, size), |_| Cell::empty()),
             active_effects: Vec::new(),
             width: size,
-            height: size
+            height: size,
         }
     }
 
@@ -84,7 +84,7 @@ impl Grid {
             cells: Array2::from_shape_fn((size, size), |_| Cell::empty()),
             active_effects: effects,
             width: size,
-            height: size
+            height: size,
         }
     }
 
@@ -294,7 +294,7 @@ impl Grid {
         let closest: (Option<(usize, usize)>, f64) = self.find_named_entities(entity_type, with_name).iter().fold(
             (None, f64::MAX),
             |acc, &(x2, y2): &(usize, usize)| {
-                let distance = (((if x1 < x2 {(x2 - x1)} else {x1 - x2}).pow(2) + (if y1 < y2 {(y2 - y1)} else {y1 - y2}).pow(2)) as f64).sqrt();
+                let distance = (((if x1 < x2 { (x2 - x1) } else { x1 - x2 }).pow(2) + (if y1 < y2 { (y2 - y1) } else { y1 - y2 }).pow(2)) as f64).sqrt();
                 if distance < acc.1 { (Some((x2, y2)), distance) } else { acc }
             });
 
@@ -409,7 +409,7 @@ impl Grid {
             dijkstra(
                 &start,
                 |cell| self.passable_neighbours_of(*cell).into_iter().map(|c| (c, 1)),
-                |cell| *cell == end
+                |cell| *cell == end,
             )
         } else {
             None
@@ -420,13 +420,13 @@ impl Grid {
 #[derive(Eq, PartialEq, Debug)]
 pub enum CursorError {
     ForGrid { e: GridError },
-    ForExchange { errors: Vec<ExchangeError> }
+    ForExchange { errors: Vec<ExchangeError> },
 }
 
 pub struct Cursor {
     cell: (usize, usize),
     direction: Direction,
-    range: usize
+    range: usize,
 }
 
 impl Cursor {

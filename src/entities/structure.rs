@@ -3,7 +3,7 @@ use std::collections::HashMap;
 #[derive(PartialEq, Clone, Debug)]
 pub struct Risk {
     pub fire: u8,
-    pub damage: u8
+    pub damage: u8,
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -16,13 +16,13 @@ pub enum Type {
     Religion,
     Education,
     HealthCare,
-    CivilService
+    CivilService,
 }
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Size {
     pub width: u8,
-    pub height: u8
+    pub height: u8,
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -32,12 +32,12 @@ pub struct StructureProperties {
     pub max_employees: u8,
     pub cost: u32,
     pub desirability: (i8, i8, i8, i8, i8, i8),
-    pub structure_type: Type
+    pub structure_type: Type,
 }
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct StructureState {
     pub current_employees: u8,
     pub risk: Risk,
-    pub commodities: HashMap<String, u32>
+    pub commodities: HashMap<String, u32>,
 }

@@ -12,14 +12,14 @@ pub enum CommodityState {
     Available,
     InTransit,
     Used,
-    Lost
+    Lost,
 }
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum ExchangeError {
     UnexpectedEntity,
     ProducerExists,
-    ConsumerExists
+    ConsumerExists,
 }
 
 pub struct CommodityExchange {
@@ -31,7 +31,7 @@ pub struct CommodityExchange {
     consumers: HashMap<String, Vec<Weak<Entity>>>,
 
     used: HashMap<String, usize>,
-    lost: HashMap<String, usize>
+    lost: HashMap<String, usize>,
 }
 
 impl CommodityExchange {
@@ -43,7 +43,7 @@ impl CommodityExchange {
             producers: HashMap::new(),
             consumers: HashMap::new(),
             used: HashMap::new(),
-            lost: HashMap::new()
+            lost: HashMap::new(),
         }
     }
 
@@ -101,7 +101,7 @@ impl CommodityExchange {
                             }
                         )
                         .collect()
-                }
+                },
             )
     }
 
@@ -119,7 +119,7 @@ impl CommodityExchange {
                             }
                         )
                         .fold(0usize, |acc, current| acc + current)
-                }
+                },
             )
     }
 
@@ -266,7 +266,7 @@ impl CommodityExchange {
                 || Vec::new(),
                 |v| {
                     v.into_iter().filter_map(|e| e.upgrade()).collect()
-                }
+                },
             )
     }
 
@@ -277,7 +277,7 @@ impl CommodityExchange {
                 || Vec::new(),
                 |v| {
                     v.into_iter().filter_map(|e| e.upgrade()).collect()
-                }
+                },
             )
     }
 
@@ -298,7 +298,7 @@ impl CommodityExchange {
             .get(commodity)
             .map_or_else(
                 || 0,
-                |v| *v
+                |v| *v,
             )
     }
 
@@ -307,7 +307,7 @@ impl CommodityExchange {
             .get(commodity)
             .map_or_else(
                 || 0,
-                |v| *v
+                |v| *v,
             )
     }
 }

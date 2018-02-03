@@ -1206,39 +1206,39 @@ fn grid_should_find_closest_named_entity() {
     let result_2 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), (4, 2));
 
     assert_eq!(result_0.map(|r| r.0), Some((1, 0)));
-    assert_eq!(result_0.map(|r| is_between(r.1, 1.0, 1.0) ), Some(true));
+    assert_eq!(result_0.map(|r| is_between(r.1, 1.0, 1.0)), Some(true));
 
     assert_eq!(result_1.map(|r| r.0), Some((1, 0)));
-    assert_eq!(result_1.map(|r| is_between(r.1, 3.0, 3.0) ), Some(true));
+    assert_eq!(result_1.map(|r| is_between(r.1, 3.0, 3.0)), Some(true));
 
     assert_eq!(result_2.map(|r| r.0), Some((4, 0)));
-    assert_eq!(result_2.map(|r| is_between(r.1, 2.0, 2.0) ), Some(true));
+    assert_eq!(result_2.map(|r| is_between(r.1, 2.0, 2.0)), Some(true));
 
     let result_3 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (3, 0));
     let result_4 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (1, 3));
     let result_5 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (0, 2));
 
     assert_eq!(result_3.map(|r| r.0), Some((4, 3)));
-    assert_eq!(result_3.map(|r| is_between(r.1, 3.16, 3.17) ), Some(true));
+    assert_eq!(result_3.map(|r| is_between(r.1, 3.16, 3.17)), Some(true));
 
     assert_eq!(result_4.map(|r| r.0), Some((3, 4)));
-    assert_eq!(result_4.map(|r| is_between(r.1, 2.23, 2.24) ), Some(true));
+    assert_eq!(result_4.map(|r| is_between(r.1, 2.23, 2.24)), Some(true));
 
     assert_eq!(result_5.map(|r| r.0), Some((3, 4)));
-    assert_eq!(result_5.map(|r| is_between(r.1, 3.60, 3.61) ), Some(true));
+    assert_eq!(result_5.map(|r| is_between(r.1, 3.60, 3.61)), Some(true));
 
     let result_6 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (3, 4));
     let result_7 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (4, 3));
     let result_8 = g.find_closest_named_entity(NamedEntityType::Structure, "s0".to_owned(), (2, 0));
 
     assert_eq!(result_6.map(|r| r.0), Some((3, 4)));
-    assert_eq!(result_6.map(|r| is_between(r.1, 0.0, 0.0) ), Some(true));
+    assert_eq!(result_6.map(|r| is_between(r.1, 0.0, 0.0)), Some(true));
 
     assert_eq!(result_7.map(|r| r.0), Some((4, 3)));
-    assert_eq!(result_7.map(|r| is_between(r.1, 0.0, 0.0) ), Some(true));
+    assert_eq!(result_7.map(|r| is_between(r.1, 0.0, 0.0)), Some(true));
 
     assert_eq!(result_8.map(|r| r.0), Some((2, 0)));
-    assert_eq!(result_8.map(|r| is_between(r.1, 0.0, 0.0) ), Some(true));
+    assert_eq!(result_8.map(|r| is_between(r.1, 0.0, 0.0)), Some(true));
 
     let result_9 = g.find_closest_named_entity(NamedEntityType::Walker, "d1".to_owned(), (0, 0));
     let result_10 = g.find_closest_named_entity(NamedEntityType::Resource, "d2".to_owned(), (0, 0));

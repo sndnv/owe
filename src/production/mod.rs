@@ -6,13 +6,13 @@ use std::fmt;
 
 pub struct Commodity {
     pub name: String,
-    pub amount: u32
+    pub amount: u32,
 }
 
 pub struct ProductionStage {
     pub commodity: Commodity,
     pub used: Vec<Commodity>,
-    pub required: Vec<Commodity>
+    pub required: Vec<Commodity>,
 }
 
 pub trait Producer {
