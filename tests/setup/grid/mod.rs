@@ -1,4 +1,4 @@
-use owe::grid;
+use owe::map;
 use owe::entities::doodad;
 use owe::entities::resource;
 use owe::entities::structure;
@@ -13,13 +13,13 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 #[allow(dead_code)]
-pub fn grid_empty() -> grid::Grid {
-    grid::Grid::new(3)
+pub fn grid_empty() -> map::Grid {
+    map::Grid::new(3)
 }
 
 #[allow(dead_code)]
-pub fn grid_default() -> grid::Grid {
-    let mut g = grid::Grid::new(3);
+pub fn grid_default() -> map::Grid {
+    let mut g = map::Grid::new(3);
 
     let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
     let d1 = doodad::Doodad { name: "d1".to_owned(), is_removable: false };
@@ -119,8 +119,8 @@ pub fn grid_default() -> grid::Grid {
 }
 
 #[allow(dead_code)]
-pub fn grid_large() -> grid::Grid {
-    let mut g = grid::Grid::new(5);
+pub fn grid_large() -> map::Grid {
+    let mut g = map::Grid::new(5);
 
     let d0 = doodad::Doodad { name: "d0".to_owned(), is_removable: false };
     let d1 = doodad::Doodad { name: "d1".to_owned(), is_removable: false };
@@ -275,18 +275,18 @@ pub fn grid_large() -> grid::Grid {
 }
 
 #[allow(dead_code)]
-pub fn grid_with_direction_from(direction: grid::Direction, from: (usize, usize)) -> (grid::Grid, grid::Cursor, exchange::CommodityExchange) {
+pub fn grid_with_direction_from(direction: map::Direction, from: (usize, usize)) -> (map::Grid, map::Cursor, exchange::CommodityExchange) {
     let g = grid_default();
-    let gc = grid::Cursor::new(1, direction, from);
+    let gc = map::Cursor::new(1, direction, from);
     let e = exchange::CommodityExchange::new();
 
     (g, gc, e)
 }
 
 #[allow(dead_code)]
-pub fn grid_with_effects() -> (grid::Grid, grid::Cursor, exchange::CommodityExchange, Vec<Rc<Effect>>) {
+pub fn grid_with_effects() -> (map::Grid, map::Cursor, exchange::CommodityExchange, Vec<Rc<Effect>>) {
     let g = grid_default();
-    let gc = grid::Cursor::new(1, grid::Direction::Right, (0, 0));
+    let gc = map::Cursor::new(1, map::Direction::Right, (0, 0));
     let e = exchange::CommodityExchange::new();
     let effects = effects_default();
 
@@ -294,9 +294,9 @@ pub fn grid_with_effects() -> (grid::Grid, grid::Cursor, exchange::CommodityExch
 }
 
 #[allow(dead_code)]
-pub fn grid_with_production() -> (grid::Grid, grid::Cursor, exchange::CommodityExchange) {
-    let mut g = grid::Grid::new(3);
-    let gc = grid::Cursor::new(1, grid::Direction::Right, (0, 0));
+pub fn grid_with_production() -> (map::Grid, map::Cursor, exchange::CommodityExchange) {
+    let mut g = map::Grid::new(3);
+    let gc = map::Cursor::new(1, map::Direction::Right, (0, 0));
     let mut e = exchange::CommodityExchange::new();
 
     let r0 = resource::ResourceProperties { max_amount: 5, name: "r0".to_owned(), replenish_amount: Some(1) };
@@ -399,8 +399,8 @@ pub fn grid_with_roads(
     row0: (Option<&Entity>, Option<&Entity>, Option<&Entity>),
     row1: (Option<&Entity>, Option<&Entity>, Option<&Entity>),
     row2: (Option<&Entity>, Option<&Entity>, Option<&Entity>),
-) -> grid::Grid {
-    let mut g = grid::Grid::new(3);
+) -> map::Grid {
+    let mut g = map::Grid::new(3);
 
     let _ = row0.0.map(|entity| g.add_entity((0, 0), entity.clone()));
     let _ = row0.1.map(|entity| g.add_entity((1, 0), entity.clone()));

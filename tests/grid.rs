@@ -8,7 +8,7 @@ use uuid::Uuid;
 use std::collections::HashMap;
 use owe::entities::{Entity, NamedEntityType};
 use owe::entities::{doodad, structure, resource, walker};
-use owe::grid::{Direction, CellState, GridError};
+use owe::map::{CellState, GridError, Direction};
 use utils::extract;
 
 fn sort_cells(cells: &Vec<(usize, usize)>) -> Vec<(usize, usize)> {

@@ -3,7 +3,7 @@ extern crate ndarray;
 extern crate uuid;
 extern crate pathfinding;
 
-pub mod grid;
+pub mod map;
 pub mod effects;
 pub mod entities;
 pub mod production;
