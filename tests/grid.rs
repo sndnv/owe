@@ -7,7 +7,7 @@ mod utils;
 use uuid::Uuid;
 use std::collections::HashMap;
 use owe::entities::{Entity, NamedEntityType};
-use owe::entities::{doodad, structure};
+use owe::entities::{doodad, structure, resource, walker};
 use owe::grid::{Direction, CellState, GridError};
 use utils::extract;
 
@@ -283,47 +283,47 @@ fn grid_without_entities_should_report_correct_cell_neighbors() {
     let g = setup::grid::grid_empty();
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((0, 0))),
+        sort_cells(&g.passable_neighbours_of(&(0, 0))),
         sort_cells(&vec![(1, 0), (0, 1), (1, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((1, 0))),
+        sort_cells(&g.passable_neighbours_of(&(1, 0))),
         sort_cells(&vec![(0, 0), (2, 0), (0, 1), (1, 1), (2, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((2, 0))),
+        sort_cells(&g.passable_neighbours_of(&(2, 0))),
         sort_cells(&vec![(1, 0), (1, 1), (2, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((0, 1))),
+        sort_cells(&g.passable_neighbours_of(&(0, 1))),
         sort_cells(&vec![(0, 0), (1, 0), (1, 1), (0, 2), (1, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((1, 1))),
+        sort_cells(&g.passable_neighbours_of(&(1, 1))),
         sort_cells(&vec![(0, 0), (1, 0), (2, 0), (0, 1), (2, 1), (0, 2), (1, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((2, 1))),
+        sort_cells(&g.passable_neighbours_of(&(2, 1))),
         sort_cells(&vec![(1, 0), (2, 0), (1, 1), (1, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((0, 2))),
+        sort_cells(&g.passable_neighbours_of(&(0, 2))),
         sort_cells(&vec![(0, 1), (1, 1), (1, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((1, 2))),
+        sort_cells(&g.passable_neighbours_of(&(1, 2))),
         sort_cells(&vec![(0, 1), (1, 1), (2, 1), (0, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((2, 2))),
+        sort_cells(&g.passable_neighbours_of(&(2, 2))),
         sort_cells(&vec![(1, 1), (2, 1), (1, 2)])
     );
 }
@@ -333,47 +333,47 @@ fn grid_with_entities_should_report_correct_cell_neighbors() {
     let g = setup::grid::grid_default();
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((0, 0))),
+        sort_cells(&g.passable_neighbours_of(&(0, 0))),
         sort_cells(&vec![(1, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((1, 0))),
+        sort_cells(&g.passable_neighbours_of(&(1, 0))),
         sort_cells(&vec![(1, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((2, 0))),
+        sort_cells(&g.passable_neighbours_of(&(2, 0))),
         sort_cells(&vec![(1, 1)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((0, 1))),
+        sort_cells(&g.passable_neighbours_of(&(0, 1))),
         sort_cells(&vec![(1, 1), (1, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((1, 1))),
+        sort_cells(&g.passable_neighbours_of(&(1, 1))),
         sort_cells(&vec![(1, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((2, 1))),
+        sort_cells(&g.passable_neighbours_of(&(2, 1))),
         sort_cells(&vec![(1, 1), (1, 2), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((0, 2))),
+        sort_cells(&g.passable_neighbours_of(&(0, 2))),
         sort_cells(&vec![(1, 1), (1, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((1, 2))),
+        sort_cells(&g.passable_neighbours_of(&(1, 2))),
         sort_cells(&vec![(1, 1), (2, 2)])
     );
 
     assert_eq!(
-        sort_cells(&g.passable_neighbours_of((2, 2))),
+        sort_cells(&g.passable_neighbours_of(&(2, 2))),
         sort_cells(&vec![(1, 1), (1, 2)])
     );
 }
@@ -394,7 +394,7 @@ fn grid_without_entities_should_calculate_paths_between_cells() {
 
     assert_eq!(
         g.path_between((0, 0), (2, 0)),
-        Some((vec![(0, 0), (1, 1), (2, 0)], 2))
+        Some((vec![(0, 0), (1, 0), (2, 0)], 2))
     );
 
     assert_eq!(
@@ -409,7 +409,7 @@ fn grid_without_entities_should_calculate_paths_between_cells() {
 
     assert_eq!(
         g.path_between((0, 0), (2, 1)),
-        Some((vec![(0, 0), (1, 1), (2, 1)], 2))
+        Some((vec![(0, 0), (1, 0), (2, 1)], 2))
     );
 
     assert_eq!(
@@ -1201,9 +1201,9 @@ fn grid_should_find_closest_named_entity() {
     assert_eq!(g.add_entity((4, 3), Entity::Doodad { props: d3_2 }), Ok(CellState::Empty));
 
 
-    let result_0 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), (0, 0));
-    let result_1 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), (1, 3));
-    let result_2 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), (4, 2));
+    let result_0 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), &(0, 0));
+    let result_1 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), &(1, 3));
+    let result_2 = g.find_closest_named_entity(NamedEntityType::Doodad, "d0".to_owned(), &(4, 2));
 
     assert_eq!(result_0.map(|r| r.0), Some((1, 0)));
     assert_eq!(result_0.map(|r| is_between(r.1, 1.0, 1.0)), Some(true));
@@ -1214,9 +1214,9 @@ fn grid_should_find_closest_named_entity() {
     assert_eq!(result_2.map(|r| r.0), Some((4, 0)));
     assert_eq!(result_2.map(|r| is_between(r.1, 2.0, 2.0)), Some(true));
 
-    let result_3 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (3, 0));
-    let result_4 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (1, 3));
-    let result_5 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (0, 2));
+    let result_3 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), &(3, 0));
+    let result_4 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), &(1, 3));
+    let result_5 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), &(0, 2));
 
     assert_eq!(result_3.map(|r| r.0), Some((4, 3)));
     assert_eq!(result_3.map(|r| is_between(r.1, 3.16, 3.17)), Some(true));
@@ -1227,9 +1227,9 @@ fn grid_should_find_closest_named_entity() {
     assert_eq!(result_5.map(|r| r.0), Some((3, 4)));
     assert_eq!(result_5.map(|r| is_between(r.1, 3.60, 3.61)), Some(true));
 
-    let result_6 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (3, 4));
-    let result_7 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), (4, 3));
-    let result_8 = g.find_closest_named_entity(NamedEntityType::Structure, "s0".to_owned(), (2, 0));
+    let result_6 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), &(3, 4));
+    let result_7 = g.find_closest_named_entity(NamedEntityType::Doodad, "d3".to_owned(), &(4, 3));
+    let result_8 = g.find_closest_named_entity(NamedEntityType::Structure, "s0".to_owned(), &(2, 0));
 
     assert_eq!(result_6.map(|r| r.0), Some((3, 4)));
     assert_eq!(result_6.map(|r| is_between(r.1, 0.0, 0.0)), Some(true));
@@ -1240,9 +1240,9 @@ fn grid_should_find_closest_named_entity() {
     assert_eq!(result_8.map(|r| r.0), Some((2, 0)));
     assert_eq!(result_8.map(|r| is_between(r.1, 0.0, 0.0)), Some(true));
 
-    let result_9 = g.find_closest_named_entity(NamedEntityType::Walker, "d1".to_owned(), (0, 0));
-    let result_10 = g.find_closest_named_entity(NamedEntityType::Resource, "d2".to_owned(), (0, 0));
-    let result_11 = g.find_closest_named_entity(NamedEntityType::Structure, "d3".to_owned(), (0, 0));
+    let result_9 = g.find_closest_named_entity(NamedEntityType::Walker, "d1".to_owned(), &(0, 0));
+    let result_10 = g.find_closest_named_entity(NamedEntityType::Resource, "d2".to_owned(), &(0, 0));
+    let result_11 = g.find_closest_named_entity(NamedEntityType::Structure, "d3".to_owned(), &(0, 0));
 
     assert_eq!(result_9.map(|r| r.0), None);
     assert_eq!(result_10.map(|r| r.0), None);
@@ -1251,5 +1251,372 @@ fn grid_should_find_closest_named_entity() {
 
 #[test]
 fn grid_should_find_first_adjacent_road() {
-    //TODO - implement
+    let d0 = Entity::Doodad { props: doodad::Doodad { name: "d0".to_owned(), is_removable: false } };
+
+    let r0 = Entity::Resource {
+        id: Uuid::new_v4(),
+        props: resource::ResourceProperties { max_amount: 5, name: "r0".to_owned(), replenish_amount: Some(1) },
+        state: resource::ResourceState { current_amount: 2 },
+        producer: None,
+    };
+
+    let s0 = Entity::Structure {
+        id: Uuid::new_v4(),
+        props: structure::StructureProperties {
+            name: "s0".to_owned(),
+            size: structure::Size { width: 1, height: 1 },
+            max_employees: 5,
+            cost: 1000,
+            desirability: (0, 0, 0, 0, 0, 0),
+            structure_type: structure::Type::Housing,
+        },
+        state: structure::StructureState {
+            current_employees: 0,
+            commodities: HashMap::new(),
+            risk: structure::Risk { damage: 0, fire: 0 },
+        },
+        producer: None,
+    };
+
+    let s1 = Entity::Structure {
+        id: Uuid::new_v4(),
+        props: structure::StructureProperties {
+            name: "s1".to_owned(),
+            size: structure::Size { width: 2, height: 1 },
+            max_employees: 5,
+            cost: 1000,
+            desirability: (0, 0, 0, 0, 0, 0),
+            structure_type: structure::Type::Housing,
+        },
+        state: structure::StructureState {
+            current_employees: 0,
+            commodities: HashMap::new(),
+            risk: structure::Risk { damage: 0, fire: 0 },
+        },
+        producer: None,
+    };
+
+    let s2 = Entity::Structure {
+        id: Uuid::new_v4(),
+        props: structure::StructureProperties {
+            name: "s2".to_owned(),
+            size: structure::Size { width: 2, height: 2 },
+            max_employees: 5,
+            cost: 1000,
+            desirability: (0, 0, 0, 0, 0, 0),
+            structure_type: structure::Type::Housing,
+        },
+        state: structure::StructureState {
+            current_employees: 0,
+            commodities: HashMap::new(),
+            risk: structure::Risk { damage: 0, fire: 0 },
+        },
+        producer: None,
+    };
+
+    let s3 = Entity::Structure {
+        id: Uuid::new_v4(),
+        props: structure::StructureProperties {
+            name: "s3".to_owned(),
+            size: structure::Size { width: 2, height: 3 },
+            max_employees: 5,
+            cost: 1000,
+            desirability: (0, 0, 0, 0, 0, 0),
+            structure_type: structure::Type::Housing,
+        },
+        state: structure::StructureState {
+            current_employees: 0,
+            commodities: HashMap::new(),
+            risk: structure::Risk { damage: 0, fire: 0 },
+        },
+        producer: None,
+    };
+
+    let s4 = Entity::Structure {
+        id: Uuid::new_v4(),
+        props: structure::StructureProperties {
+            name: "s0".to_owned(),
+            size: structure::Size { width: 3, height: 3 },
+            max_employees: 5,
+            cost: 1000,
+            desirability: (0, 0, 0, 0, 0, 0),
+            structure_type: structure::Type::Housing,
+        },
+        state: structure::StructureState {
+            current_employees: 0,
+            commodities: HashMap::new(),
+            risk: structure::Risk { damage: 0, fire: 0 },
+        },
+        producer: None,
+    };
+
+    let w0 = Entity::Walker {
+        id: Uuid::new_v4(),
+        props: walker::WalkerProperties {
+            name: "w0".to_owned(),
+            patrol: None,
+            max_life: Some(3),
+        },
+        state: walker::WalkerState {
+            current_life: None,
+            commodities: HashMap::new(),
+        },
+    };
+
+    let rd = Entity::Road;
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&rd), Some(&rd), Some(&rd)),
+        (Some(&rd), Some(&s0), Some(&rd)),
+        (Some(&rd), Some(&rd), Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((1, 0)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, Some(&rd), None/* */),
+        (Some(&rd), Some(&s0), Some(&rd)),
+        (None/* */, Some(&rd), None/* */),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((1, 0)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, None/* */),
+        (Some(&rd), Some(&s0), Some(&rd)),
+        (None/* */, Some(&rd), None/* */),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((0, 1)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, None/* */),
+        (None/* */, Some(&s0), Some(&rd)),
+        (None/* */, Some(&rd), None/* */),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((2, 1)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, None/* */),
+        (None/* */, Some(&s0), None/* */),
+        (None/* */, Some(&rd), None/* */),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((1, 2)));
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&rd), None/* */, Some(&rd)),
+        (None/* */, Some(&s0), None/* */),
+        (Some(&rd), None/* */, Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), None);
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&rd), Some(&rd), Some(&rd)),
+        (Some(&rd), Some(&s1), None/*S*/),
+        (Some(&rd), Some(&rd), Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((1, 0)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((1, 0)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, Some(&rd), Some(&rd)),
+        (Some(&rd), Some(&s1), None/*S*/),
+        (None/* */, Some(&rd), Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((1, 0)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((1, 0)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, Some(&rd)),
+        (Some(&rd), Some(&s1), None/*S*/),
+        (None/* */, Some(&rd), Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((2, 0)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((2, 0)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, None/* */),
+        (Some(&rd), Some(&s1), None/*S*/),
+        (None/* */, Some(&rd), Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((0, 1)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((0, 1)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, None/* */),
+        (None/* */, Some(&s1), None/*S*/),
+        (None/* */, Some(&rd), Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((1, 2)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((1, 2)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, None/* */),
+        (None/* */, Some(&s1), None/*S*/),
+        (None/* */, None/* */, Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((2, 2)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((2, 2)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, None/* */),
+        (None/* */, Some(&s1), None/*S*/),
+        (Some(&rd), Some(&rd), None/* */),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((1, 2)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((1, 2)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, None/* */),
+        (Some(&rd), Some(&s2), None/*S*/),
+        (None/* */, None/*S*/, None/*S*/),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((0, 1)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((0, 1)));
+    assert_eq!(g.find_first_adjacent_road((1, 2)), Some((0, 1)));
+    assert_eq!(g.find_first_adjacent_road((2, 2)), Some((0, 1)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, None/* */, None/* */),
+        (None/* */, Some(&s0), None/* */),
+        (None/* */, None/* */, None/* */),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), None);
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&s1), None/*S*/, None/* */),
+        (None/* */, None/* */, None/* */),
+        (Some(&rd), Some(&rd), Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((0, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((1, 0)), None);
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&s1), None/*S*/, None/* */),
+        (None/* */, None/* */, Some(&rd)),
+        (None/* */, None/* */, None/* */),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((0, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((1, 0)), None);
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&rd), Some(&s2), None/*S*/),
+        (None/* */, None/*S*/, None/*S*/),
+        (Some(&rd), None/* */, Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 0)), Some((0, 0)));
+    assert_eq!(g.find_first_adjacent_road((2, 0)), Some((0, 0)));
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((0, 0)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((0, 0)));
+
+    let g = setup::grid::grid_with_roads(
+        (None/* */, Some(&s2), None/*S*/),
+        (None/* */, None/*S*/, None/*S*/),
+        (Some(&rd), None/* */, Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 0)), Some((2, 2)));
+    assert_eq!(g.find_first_adjacent_road((2, 0)), Some((2, 2)));
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((2, 2)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((2, 2)));
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&rd), Some(&s3), None/*S*/),
+        (Some(&rd), None/*S*/, None/*S*/),
+        (Some(&rd), None/*S*/, None/*S*/),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 0)), Some((0, 0)));
+    assert_eq!(g.find_first_adjacent_road((2, 0)), Some((0, 0)));
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((0, 0)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((0, 0)));
+    assert_eq!(g.find_first_adjacent_road((1, 2)), Some((0, 0)));
+    assert_eq!(g.find_first_adjacent_road((2, 2)), Some((0, 0)));
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&s0), Some(&s0), Some(&s0)),
+        (Some(&s0), Some(&rd), Some(&s0)),
+        (Some(&s0), Some(&s0), Some(&s0)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((0, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((1, 0)), Some((1, 1)));
+    assert_eq!(g.find_first_adjacent_road((2, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((0, 1)), Some((1, 1)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((1, 1)));
+    assert_eq!(g.find_first_adjacent_road((0, 2)), None);
+    assert_eq!(g.find_first_adjacent_road((1, 2)), Some((1, 1)));
+    assert_eq!(g.find_first_adjacent_road((2, 2)), None);
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&s4), None/*S*/, None/*S*/),
+        (None/*S*/, None/*S*/, None/*S*/),
+        (None/*S*/, None/*S*/, None/*S*/),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((0, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((1, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((2, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((0, 1)), None);
+    assert_eq!(g.find_first_adjacent_road((1, 1)), None);
+    assert_eq!(g.find_first_adjacent_road((2, 1)), None);
+    assert_eq!(g.find_first_adjacent_road((0, 2)), None);
+    assert_eq!(g.find_first_adjacent_road((1, 2)), None);
+    assert_eq!(g.find_first_adjacent_road((2, 2)), None);
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&s0), None/* */, Some(&s0)),
+        (None/* */, Some(&rd), None/* */),
+        (Some(&s0), None/* */, Some(&s0)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((0, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((2, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((0, 2)), None);
+    assert_eq!(g.find_first_adjacent_road((2, 2)), None);
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&w0), Some(&rd), Some(&d0)),
+        (Some(&rd), Some(&s0), Some(&rd)),
+        (Some(&r0), Some(&rd), Some(&s0)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((1, 0)));
+    assert_eq!(g.find_first_adjacent_road((2, 2)), Some((2, 1)));
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&rd), Some(&s0), Some(&rd)),
+        (Some(&d0), Some(&s0), Some(&s0)),
+        (Some(&rd), Some(&d0), Some(&rd)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((1, 0)), Some((0, 0)));
+    assert_eq!(g.find_first_adjacent_road((1, 1)), None);
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((2, 0)));
+
+    let g = setup::grid::grid_with_roads(
+        (Some(&s0), Some(&w0), Some(&d0)),
+        (Some(&s0), Some(&s1), None/*S*/),
+        (Some(&rd), Some(&rd), Some(&r0)),
+    );
+
+    assert_eq!(g.find_first_adjacent_road((0, 0)), None);
+    assert_eq!(g.find_first_adjacent_road((0, 1)), Some((0, 2)));
+    assert_eq!(g.find_first_adjacent_road((1, 1)), Some((1, 2)));
+    assert_eq!(g.find_first_adjacent_road((2, 1)), Some((1, 2)));
 }

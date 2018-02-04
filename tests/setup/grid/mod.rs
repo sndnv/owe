@@ -12,12 +12,12 @@ use std::rc::Rc;
 use std::collections::HashMap;
 use uuid::Uuid;
 
+#[allow(dead_code)]
 pub fn grid_empty() -> grid::Grid {
-    let g = grid::Grid::new(3);
-
-    g
+    grid::Grid::new(3)
 }
 
+#[allow(dead_code)]
 pub fn grid_default() -> grid::Grid {
     let mut g = grid::Grid::new(3);
 
@@ -118,6 +118,7 @@ pub fn grid_default() -> grid::Grid {
     g
 }
 
+#[allow(dead_code)]
 pub fn grid_large() -> grid::Grid {
     let mut g = grid::Grid::new(5);
 
@@ -273,6 +274,7 @@ pub fn grid_large() -> grid::Grid {
     g
 }
 
+#[allow(dead_code)]
 pub fn grid_with_direction_from(direction: grid::Direction, from: (usize, usize)) -> (grid::Grid, grid::Cursor, exchange::CommodityExchange) {
     let g = grid_default();
     let gc = grid::Cursor::new(1, direction, from);
@@ -281,6 +283,7 @@ pub fn grid_with_direction_from(direction: grid::Direction, from: (usize, usize)
     (g, gc, e)
 }
 
+#[allow(dead_code)]
 pub fn grid_with_effects() -> (grid::Grid, grid::Cursor, exchange::CommodityExchange, Vec<Rc<Effect>>) {
     let g = grid_default();
     let gc = grid::Cursor::new(1, grid::Direction::Right, (0, 0));
@@ -290,6 +293,7 @@ pub fn grid_with_effects() -> (grid::Grid, grid::Cursor, exchange::CommodityExch
     (g, gc, e, effects)
 }
 
+#[allow(dead_code)]
 pub fn grid_with_production() -> (grid::Grid, grid::Cursor, exchange::CommodityExchange) {
     let mut g = grid::Grid::new(3);
     let gc = grid::Cursor::new(1, grid::Direction::Right, (0, 0));
@@ -388,6 +392,29 @@ pub fn grid_with_production() -> (grid::Grid, grid::Cursor, exchange::CommodityE
     let _ = e.add_producer(g.entity((2, 0)).unwrap(), "c2");
 
     (g, gc, e)
+}
+
+#[allow(dead_code)]
+pub fn grid_with_roads(
+    row0: (Option<&Entity>, Option<&Entity>, Option<&Entity>),
+    row1: (Option<&Entity>, Option<&Entity>, Option<&Entity>),
+    row2: (Option<&Entity>, Option<&Entity>, Option<&Entity>),
+) -> grid::Grid {
+    let mut g = grid::Grid::new(3);
+
+    let _ = row0.0.map(|entity| g.add_entity((0, 0), entity.clone()));
+    let _ = row0.1.map(|entity| g.add_entity((1, 0), entity.clone()));
+    let _ = row0.2.map(|entity| g.add_entity((2, 0), entity.clone()));
+
+    let _ = row1.0.map(|entity| g.add_entity((0, 1), entity.clone()));
+    let _ = row1.1.map(|entity| g.add_entity((1, 1), entity.clone()));
+    let _ = row1.2.map(|entity| g.add_entity((2, 1), entity.clone()));
+
+    let _ = row2.0.map(|entity| g.add_entity((0, 2), entity.clone()));
+    let _ = row2.1.map(|entity| g.add_entity((1, 2), entity.clone()));
+    let _ = row2.2.map(|entity| g.add_entity((2, 2), entity.clone()));
+
+    g
 }
 
 #[derive(Clone)]

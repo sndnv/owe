@@ -9,10 +9,12 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use uuid::Uuid;
 
+#[allow(dead_code)]
 pub fn exchange_default() -> CommodityExchange {
     CommodityExchange::new()
 }
 
+#[allow(dead_code)]
 pub fn commodities_default() -> Vec<Commodity> {
     let c0 = Commodity { name: "c0".to_owned(), amount: 1 };
     let c1 = Commodity { name: "c1".to_owned(), amount: 3 };
@@ -21,6 +23,7 @@ pub fn commodities_default() -> Vec<Commodity> {
     vec![c0, c1, c2]
 }
 
+#[allow(dead_code)]
 pub fn entities_default() -> Vec<Rc<Entity>> {
     let s0 = structure::StructureProperties {
         name: "s0".to_owned(),

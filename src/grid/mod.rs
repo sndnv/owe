@@ -1,12 +1,13 @@
 use std::f64;
 use std::rc::Rc;
+use std::fmt;
+use std::cmp::Ordering;
 use ndarray::Array2;
 use pathfinding::dijkstra;
 use entities::{Entity, NamedEntityType};
 use entities::structure;
 use effects::Effect;
 use production::exchange::{CommodityExchange, CommodityState, ExchangeError};
-use std::fmt;
 
 #[derive(Clone)]
 struct Cell {
@@ -108,7 +109,7 @@ impl Grid {
                 let entity_rc = Rc::new(entity);
 
                 match *entity_rc {
-                    Entity::Structure { ref props, .. } if props.size.width * props.size.height > 1 => {
+                    Entity::Structure { ref props, .. } => {
                         let cells = Self::entity_cells(&props.size, at);
 
                         if cells.iter().all(|c| self.cell_state(*c) == CellState::Empty) {
@@ -257,45 +258,70 @@ impl Grid {
     }
 
     pub fn find_first_adjacent_road(&self, next_to: (usize, usize)) -> Option<(usize, usize)> {
-        let _: Option<Vec<(usize, usize)>> = self.cells.get(next_to)
-            .and_then(|cell: &Cell| cell.entity.as_ref().map(|entity| (entity, cell.parent.unwrap())))
-            .and_then(|(entity, parent)| {
-                match **entity {
-                    Entity::Structure { ref props, .. } => Some(Self::entity_cells(&props.size, parent)),
-                    _ => None
-                }
+        self.cells.get(next_to)
+            .and_then(|cell: &Cell| {
+                cell.entity.as_ref().and_then(|entity| {
+                    match **entity {
+                        Entity::Structure { ref props, .. } => Some(Self::entity_cells(&props.size, cell.parent.unwrap())),
+                        _ => None
+                    }
+                })
             })
-            .map(|entity_cells: Vec<(usize, usize)>| {
-                entity_cells
-                    .into_iter()
+            .and_then(|entity_cells: Vec<(usize, usize)>| {
+                let mut neighbours: Vec<(usize, usize)> = entity_cells
+                    .iter()
                     .fold(
                         vec![],
                         |mut acc: Vec<(usize, usize)>, cell| {
-                            let mut neighbours: Vec<(usize, usize)> = Self::neighbours_of(cell).into_iter()
+                            let mut neighbours: Vec<(usize, usize)> = Self::neighbours_of(cell, false).into_iter()
                                 .filter(|cell| cell.is_some())
                                 .map(|cell| cell.unwrap()).collect();
 
                             acc.append(&mut neighbours);
                             acc
-                        })
-            });
+                        });
 
-        //TODO - distinct neighbour tiles
-        //TODO - remove own tiles
-        //TODO - get entities for tiles
-        //TODO - get first road
+                neighbours.retain(|cell| !entity_cells.contains(cell));
 
-        None //TODO - implement
+                neighbours.sort_unstable_by(|a, b| {
+                    match a.1.cmp(&b.1) {
+                        Ordering::Equal => a.0.cmp(&b.0),
+                        ordering => ordering,
+                    }
+                });
+
+                neighbours.dedup();
+
+                neighbours.iter()
+                    .find(|&&neighbour| {
+                        self.cells.get(neighbour)
+                            .and_then(|cell: &Cell| {
+                                cell.entity.as_ref().and_then(|entity| {
+                                    match **entity {
+                                        Entity::Road => Some(neighbour),
+                                        _ => None
+                                    }
+                                })
+                            })
+                            .is_some()
+                    })
+                    .map(|&neighbour| neighbour)
+            })
     }
 
-    pub fn find_closest_named_entity(&self, entity_type: NamedEntityType, with_name: String, close_to: (usize, usize)) -> Option<((usize, usize), f64)> {
-        let (x1, y1) = close_to;
+    pub fn distance_between(&(x1, y1): &(usize, usize), &(x2, y2): &(usize, usize)) -> f64 {
+        let x = if x1 < x2 { (x2 - x1) } else { x1 - x2 };
+        let y = if y1 < y2 { (y2 - y1) } else { y1 - y2 };
 
+        ((x * x + y * y) as f64).sqrt()
+    }
+
+    pub fn find_closest_named_entity(&self, entity_type: NamedEntityType, with_name: String, close_to: &(usize, usize)) -> Option<((usize, usize), f64)> {
         let closest: (Option<(usize, usize)>, f64) = self.find_named_entities(entity_type, with_name).iter().fold(
             (None, f64::MAX),
-            |acc, &(x2, y2): &(usize, usize)| {
-                let distance = (((if x1 < x2 { (x2 - x1) } else { x1 - x2 }).pow(2) + (if y1 < y2 { (y2 - y1) } else { y1 - y2 }).pow(2)) as f64).sqrt();
-                if distance < acc.1 { (Some((x2, y2)), distance) } else { acc }
+            |acc, entity: &(usize, usize)| {
+                let distance = Self::distance_between(close_to, entity);
+                if distance < acc.1 { (Some(*entity), distance) } else { acc }
             });
 
         closest.0.map(|cell| (cell, closest.1))
@@ -378,27 +404,24 @@ impl Grid {
         }
     }
 
-    pub fn neighbours_of(cell: (usize, usize)) -> Vec<Option<(usize, usize)>> {
-        let (x, y) = cell;
+    pub fn neighbours_of(cell: &(usize, usize), with_corner_neighbours: bool) -> Vec<Option<(usize, usize)>> {
+        let &(x, y) = cell;
 
         vec![
-            if x > 0 { Some((x - 1, y + 1)) } else { None },
-            Some((x, y + 1)),
-            Some((x + 1, y + 1)),
-            if x > 0 { Some((x - 1, y)) } else { None },
-            Some((x + 1, y)),
-            if x > 0 && y > 0 { Some((x - 1, y - 1)) } else { None },
-            if y > 0 { Some((x, y - 1)) } else { None },
-            if y > 0 { Some((x + 1, y - 1)) } else { None }
+            /* top    left   */ if with_corner_neighbours && x > 0 && y > 0 { Some((x - 1, y - 1)) } else { None },
+            /* top    center */ if y > 0 { Some((x, y - 1)) } else { None },
+            /* top    right  */ if with_corner_neighbours && y > 0 { Some((x + 1, y - 1)) } else { None },
+            /* middle left   */ if x > 0 { Some((x - 1, y)) } else { None },
+            /* middle right  */ Some((x + 1, y)),
+            /* bottom left   */ if with_corner_neighbours && x > 0 { Some((x - 1, y + 1)) } else { None },
+            /* bottom center */ Some((x, y + 1)),
+            /* bottom right  */ if with_corner_neighbours { Some((x + 1, y + 1)) } else { None },
         ]
     }
 
-    pub fn passable_neighbours_of(&self, cell: (usize, usize)) -> Vec<(usize, usize)> {
-        let (x, y) = cell;
-
+    pub fn passable_neighbours_of(&self, cell: &(usize, usize)) -> Vec<(usize, usize)> {
         //TODO - allow corner neighbors only for specific walkers that don't need roads
-
-        Self::neighbours_of(cell).into_iter()
+        Self::neighbours_of(cell, true).into_iter()
             .filter(|opt| opt.map_or(false, |c| self.is_cell_passable(c)))
             .map(|opt| opt.unwrap())
             .collect()
@@ -408,7 +431,7 @@ impl Grid {
         if self.is_cell_in_grid(start) && self.is_cell_in_grid(end) {
             dijkstra(
                 &start,
-                |cell| self.passable_neighbours_of(*cell).into_iter().map(|c| (c, 1)),
+                |cell| self.passable_neighbours_of(cell).into_iter().map(|c| (c, 1)),
                 |cell| *cell == end,
             )
         } else {
@@ -610,51 +633,63 @@ impl Cursor {
 
                 let exchange_updates = match updated_entity {
                     Entity::Resource { ref props, ref mut producer, ref mut state, .. } => {
-                        producer.as_mut().map(|mut p| {
-                            let exchange_update = p.produce_commodity(&*e).map(|stage| {
-                                if state.current_amount >= stage.commodity.amount {
-                                    state.current_amount -= stage.commodity.amount;
-                                } else {
-                                    state.current_amount = 0;
-                                }
+                        producer.as_mut()
+                            .and_then(|p| {
+                                let exchange_update = p.produce_commodity(&*e)
+                                    .map(|stage| {
+                                        if state.current_amount >= stage.commodity.amount {
+                                            state.current_amount -= stage.commodity.amount;
+                                        } else {
+                                            state.current_amount = 0;
+                                        }
 
-                                vec![(stage.commodity, CommodityState::Available)]
-                            });
+                                        vec![(stage.commodity, CommodityState::Available)]
+                                    });
 
-                            props.replenish_amount.map(|amount| {
-                                if state.current_amount + amount < props.max_amount {
-                                    state.current_amount += amount;
-                                } else {
-                                    state.current_amount = props.max_amount;
-                                }
-                            });
+                                props.replenish_amount
+                                    .map(|amount| {
+                                        if state.current_amount + amount < props.max_amount {
+                                            state.current_amount += amount;
+                                        } else {
+                                            state.current_amount = props.max_amount;
+                                        }
+                                    });
 
-                            exchange_update
-                        }).unwrap_or(None)
+                                exchange_update
+                            })
                     }
 
                     Entity::Structure { ref mut producer, ref mut state, .. } => {
-                        producer.as_mut().map(|mut p| {
-                            let exchange_update = p.produce_commodity(&*e).map(|stage| {
-                                let existing = state.commodities.entry(stage.commodity.name.clone()).or_insert(0);
-                                *existing += stage.commodity.amount;
+                        producer.as_mut()
+                            .and_then(|p| {
+                                let exchange_update = p.produce_commodity(&*e)
+                                    .map(|stage| {
+                                        let existing = state.commodities
+                                            .entry(stage.commodity.name.clone())
+                                            .or_insert(0);
 
-                                let mut updates = stage.required.into_iter().map(|c| (c, CommodityState::Required)).collect::<Vec<_>>();
-                                updates.extend(stage.used.into_iter().map(|c| (c, CommodityState::Used)).collect::<Vec<_>>());
-                                updates.push((stage.commodity, CommodityState::Available));
+                                        *existing += stage.commodity.amount;
 
-                                updates
-                            });
+                                        let mut updates = stage.required.into_iter()
+                                            .map(|c| (c, CommodityState::Required)).collect::<Vec<_>>();
 
-                            p.produce_walker(&*e).map(|walker| {
-                                //TODO - add walker to grid
-                                //TODO - add walker effects to grid
-                            });
+                                        updates.extend(stage.used.into_iter()
+                                            .map(|c| (c, CommodityState::Used)).collect::<Vec<_>>());
 
-                            //TODO - update current employees count
+                                        updates.push((stage.commodity, CommodityState::Available));
 
-                            exchange_update
-                        }).unwrap_or(None)
+                                        updates
+                                    });
+
+                                p.produce_walker(&*e).map(|walker| {
+                                    //TODO - add walker to grid
+                                    //TODO - add walker effects to grid
+                                });
+
+                                //TODO - update current employees count
+
+                                exchange_update
+                            })
                     }
 
                     Entity::Walker { ref mut state, .. } => {
