@@ -1,8 +1,8 @@
-pub mod exchange;
-
 use entities::Entity;
 use entities::walker::WalkerProperties;
 use std::fmt;
+
+pub mod exchange;
 
 pub struct Commodity {
     pub name: String,

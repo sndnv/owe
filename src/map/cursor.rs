@@ -1,7 +1,7 @@
-use std::rc::Rc;
 use entities::Entity;
-use map::{Grid, Cell, Direction, Cursor, CursorError};
+use map::{Cell, Cursor, CursorError, Direction, Grid};
 use production::exchange::{CommodityExchange, CommodityState};
+use std::rc::Rc;
 
 impl Cursor {
     pub fn new(range: usize, direction: Direction, start: (usize, usize)) -> Cursor {
@@ -150,10 +150,10 @@ impl Cursor {
 
             for effect in cell_effects {
                 for affected_cell in effect_area.iter_mut() {
-                    affected_cell.entity.clone().map(|e| {
-                        let mut updated_entity = (*e).clone();
+                    affected_cell.entities.iter_mut().for_each(|(_, grid_entity)| {
+                        let mut updated_entity = (*grid_entity.entity).clone();
                         effect.apply(&mut updated_entity);
-                        affected_cell.entity = Some(Rc::new(updated_entity));
+                        grid_entity.replace_entity(updated_entity);
                     });
                 }
             }
@@ -163,10 +163,10 @@ impl Cursor {
             //applies global effects
             for effect in &grid.active_effects {
                 for affected_cell in grid.cells.iter_mut() {
-                    affected_cell.entity.clone().map(|e| {
-                        let mut updated_entity = (*e).clone();
+                    affected_cell.entities.iter_mut().for_each(|(_, grid_entity)| {
+                        let mut updated_entity = (*grid_entity.entity).clone();
                         effect.apply(&mut updated_entity);
-                        affected_cell.entity = Some(Rc::new(updated_entity));
+                        grid_entity.replace_entity(updated_entity);
                     });
                 }
             }
@@ -176,17 +176,17 @@ impl Cursor {
             //TODO - process desirability changes for cells
         }
 
-        let processing_result = {
+        let processing_failures = {
             //process current cell production and state updates
             let affected_cell: &mut Cell = grid.cells.get_mut(self.cell).unwrap();
-            affected_cell.entity.clone().map(|e| {
-                let mut updated_entity = (*e).clone();
+            affected_cell.entities.iter_mut().fold(vec![], |mut acc, (id, grid_entity)| {
+                let mut updated_entity = (*grid_entity.entity).clone();
 
                 let exchange_updates = match updated_entity {
                     Entity::Resource { ref props, ref mut producer, ref mut state, .. } => {
                         producer.as_mut()
                             .and_then(|p| {
-                                let exchange_update = p.produce_commodity(&*e)
+                                let exchange_update = p.produce_commodity(&*grid_entity.entity)
                                     .map(|stage| {
                                         if state.current_amount >= stage.commodity.amount {
                                             state.current_amount -= stage.commodity.amount;
@@ -213,7 +213,7 @@ impl Cursor {
                     Entity::Structure { ref mut producer, ref mut state, .. } => {
                         producer.as_mut()
                             .and_then(|p| {
-                                let exchange_update = p.produce_commodity(&*e)
+                                let exchange_update = p.produce_commodity(&*grid_entity.entity)
                                     .map(|stage| {
                                         let existing = state.commodities
                                             .entry(stage.commodity.name.clone())
@@ -232,7 +232,7 @@ impl Cursor {
                                         updates
                                     });
 
-                                p.produce_walker(&*e).map(|walker| {
+                                p.produce_walker(&*grid_entity.entity).map(|walker| {
                                     //TODO - add walker to grid
                                     //TODO - add walker effects to grid
                                 });
@@ -254,10 +254,14 @@ impl Cursor {
                 }.unwrap_or(Vec::new());
 
                 let updated_entity = Rc::new(updated_entity);
-                let failed_updates = exchange_updates.into_iter()
+                let mut failed_updates = exchange_updates.into_iter()
                     .map(|update| {
-                        exchange
-                            .update_state(updated_entity.clone(), &update.0, update.1)
+                        exchange.update_state(
+                            updated_entity.clone(),
+                            id,
+                            &update.0,
+                            update.1,
+                        )
                     })
                     .filter_map(|result| {
                         match result {
@@ -267,19 +271,24 @@ impl Cursor {
                     })
                     .collect::<Vec<_>>();
 
-                affected_cell.entity = Some(updated_entity);
+                grid_entity.replace_ref(updated_entity);
 
                 if failed_updates.is_empty() {
-                    Ok(())
+                    acc
                 } else {
-                    Err(CursorError::ForExchange { errors: failed_updates })
+                    acc.append(&mut failed_updates);
+                    acc
                 }
-            }).unwrap_or(Ok(()))
+            })
         };
 
         //resets the cursor position
         self.cell = next_cell;
 
-        processing_result
+        if processing_failures.is_empty() {
+            Ok(())
+        } else {
+            Err(CursorError::ForExchange { errors: processing_failures })
+        }
     }
 }

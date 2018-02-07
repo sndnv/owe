@@ -1,4 +1,3 @@
-use uuid::Uuid;
 use production::Producer;
 
 pub mod structure;
@@ -15,7 +14,9 @@ pub enum State {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub enum NamedEntityType {
+pub enum EntityType {
+    Road,
+    Roadblock,
     Doodad,
     Resource,
     Structure,
@@ -31,21 +32,18 @@ pub enum Entity {
     Doodad { props: doodad::Doodad },
 
     Resource {
-        id: Uuid,
         props: resource::ResourceProperties,
         state: resource::ResourceState,
         producer: Option<Box<Producer>>,
     },
 
     Structure {
-        id: Uuid,
         props: structure::StructureProperties,
         state: structure::StructureState,
         producer: Option<Box<Producer>>,
     },
 
     Walker {
-        id: Uuid,
         props: walker::WalkerProperties,
         state: walker::WalkerState,
     },

@@ -1,8 +1,8 @@
 use owe::entities::doodad;
+use owe::entities::Entity;
 use owe::entities::resource;
 use owe::entities::structure;
 use owe::entities::walker;
-use owe::entities::Entity;
 use owe::production::Commodity;
 use owe::production::exchange::CommodityExchange;
 use std::collections::HashMap;
@@ -24,7 +24,7 @@ pub fn commodities_default() -> Vec<Commodity> {
 }
 
 #[allow(dead_code)]
-pub fn entities_default() -> Vec<Rc<Entity>> {
+pub fn entities_default() -> Vec<(Uuid, Rc<Entity>)> {
     let s0 = structure::StructureProperties {
         name: "s0".to_owned(),
         size: structure::Size { width: 1, height: 1 },
@@ -103,18 +103,31 @@ pub fn entities_default() -> Vec<Rc<Entity>> {
 
     let r1_state = resource::ResourceState { current_amount: 5 };
 
-    let e0 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s0, state: s0_state, producer: None });
-    let e1 = Rc::new(Entity::Structure { id: Uuid::new_v4(), props: s1, state: s1_state, producer: None });
-    let e2 = Rc::new(Entity::Walker { id: Uuid::new_v4(), props: w0, state: w0_state });
-    let e3 = Rc::new(Entity::Walker { id: Uuid::new_v4(), props: w1, state: w1_state });
+    let e0 = Rc::new(Entity::Structure { props: s0, state: s0_state, producer: None });
+    let e1 = Rc::new(Entity::Structure { props: s1, state: s1_state, producer: None });
+    let e2 = Rc::new(Entity::Walker { props: w0, state: w0_state });
+    let e3 = Rc::new(Entity::Walker { props: w1, state: w1_state });
     let e4 = Rc::new(Entity::Road);
     let e5 = Rc::new(Entity::Road);
     let e6 = Rc::new(Entity::Roadblock);
     let e7 = Rc::new(Entity::Roadblock);
     let e8 = Rc::new(Entity::Doodad { props: d0 });
     let e9 = Rc::new(Entity::Doodad { props: d1 });
-    let e10 = Rc::new(Entity::Resource { id: Uuid::new_v4(), props: r0, state: r0_state, producer: None });
-    let e11 = Rc::new(Entity::Resource { id: Uuid::new_v4(), props: r1, state: r1_state, producer: None });
+    let e10 = Rc::new(Entity::Resource { props: r0, state: r0_state, producer: None });
+    let e11 = Rc::new(Entity::Resource { props: r1, state: r1_state, producer: None });
 
-    vec![e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]
+    vec![
+        (Uuid::new_v4(), e0),
+        (Uuid::new_v4(), e1),
+        (Uuid::new_v4(), e2),
+        (Uuid::new_v4(), e3),
+        (Uuid::new_v4(), e4),
+        (Uuid::new_v4(), e5),
+        (Uuid::new_v4(), e6),
+        (Uuid::new_v4(), e7),
+        (Uuid::new_v4(), e8),
+        (Uuid::new_v4(), e9),
+        (Uuid::new_v4(), e10),
+        (Uuid::new_v4(), e11)
+    ]
 }

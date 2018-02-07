@@ -1,11 +1,12 @@
-use production::Commodity;
 use entities::Entity;
-use std::collections::HashMap;
+use production::Commodity;
 use std::collections::hash_map::Entry;
-use std::rc::{Weak, Rc};
+use std::collections::HashMap;
+use std::rc::{Rc, Weak};
 use uuid::Uuid;
 
 type EntityStatsMap = HashMap<String, HashMap<Uuid, (Weak<Entity>, u32)>>;
+type EntityMap = HashMap<String, HashMap<Uuid, Weak<Entity>>>;
 
 pub enum CommodityState {
     Required,
@@ -27,8 +28,8 @@ pub struct CommodityExchange {
     available: EntityStatsMap,
     in_transit: EntityStatsMap,
 
-    producers: HashMap<String, Vec<Weak<Entity>>>,
-    consumers: HashMap<String, Vec<Weak<Entity>>>,
+    producers: EntityMap,
+    consumers: EntityMap,
 
     used: HashMap<String, usize>,
     lost: HashMap<String, usize>,
@@ -47,11 +48,11 @@ impl CommodityExchange {
         }
     }
 
-    fn do_update(entity_map: &mut EntityStatsMap, entity: Rc<Entity>, commodity: &Commodity) -> Result<(), ExchangeError> {
+    fn do_update(entity_map: &mut EntityStatsMap, entity: Rc<Entity>, entity_id: &Uuid, commodity: &Commodity) -> Result<(), ExchangeError> {
         let entity_id = match *entity {
-            Entity::Structure { id, .. } => Some(id),
-            Entity::Walker { id, .. } => Some(id),
-            Entity::Resource { id, .. } => Some(id),
+            Entity::Structure { .. } => Some(*entity_id),
+            Entity::Walker { .. } => Some(*entity_id),
+            Entity::Resource { .. } => Some(*entity_id),
             _ => None
         };
 
@@ -123,26 +124,11 @@ impl CommodityExchange {
             )
     }
 
-    fn find_duplicate_entity(entities: &Vec<Weak<Entity>>, entity_id: Uuid) -> Option<Weak<Entity>> {
-        entities.into_iter()
-            .find(|e| {
-                e.upgrade().map_or(
-                    false,
-                    |e| {
-                        match *e {
-                            Entity::Structure { id, .. } => id == entity_id,
-                            _ => false
-                        }
-                    })
-            })
-            .map(|e| e.clone())
-    }
-
     //adds a new commodity producer to the exchange; removal is not needed
-    pub fn add_producer(&mut self, producer: Rc<Entity>, commodity: &str) -> Result<(), ExchangeError> {
+    pub fn add_producer(&mut self, producer: Rc<Entity>, entity_id: &Uuid, commodity: &str) -> Result<(), ExchangeError> {
         let producer_id = match *producer {
-            Entity::Structure { id, .. } => Some(id),
-            Entity::Resource { id, .. } => Some(id),
+            Entity::Structure { .. } => Some(entity_id),
+            Entity::Resource { .. } => Some(entity_id),
             _ => None
         };
 
@@ -151,23 +137,30 @@ impl CommodityExchange {
         match producer_id {
             Some(id) => {
                 match self.producers.entry(commodity.to_string()) {
-                    Entry::Occupied(entry) => {
-                        match Self::find_duplicate_entity(entry.get(), id) {
-                            Some(_) => {
+                    Entry::Occupied(mut entry) => {
+                        let mut entity_map = entry.get_mut();
+                        entity_map.retain(|_, entity| {
+                            entity.upgrade().is_some()
+                        });
+
+
+                        match entity_map.entry(*id) {
+                            Entry::Occupied(_) => {
                                 Err(ExchangeError::ProducerExists)
                             }
 
-                            None => {
-                                let commodity_producers = entry.into_mut();
-                                commodity_producers.retain(|e| e.upgrade().is_some());
-                                commodity_producers.push(entity_ptr);
+                            Entry::Vacant(entry) => {
+                                entry.insert(entity_ptr);
                                 Ok(())
                             }
                         }
                     }
 
                     Entry::Vacant(entry) => {
-                        entry.insert(vec![entity_ptr]);
+                        let mut entity_map = HashMap::new();
+                        entity_map.insert(*id, entity_ptr);
+
+                        entry.insert(entity_map);
                         Ok(())
                     }
                 }
@@ -180,9 +173,9 @@ impl CommodityExchange {
     }
 
     //adds a new commodity consumer to the exchange; removal is not needed
-    pub fn add_consumer(&mut self, consumer: Rc<Entity>, commodity: &str) -> Result<(), ExchangeError> {
+    pub fn add_consumer(&mut self, consumer: Rc<Entity>, entity_id: &Uuid, commodity: &str) -> Result<(), ExchangeError> {
         let consumer_id = match *consumer {
-            Entity::Structure { id, .. } => Some(id),
+            Entity::Structure { .. } => Some(entity_id),
             _ => None
         };
 
@@ -191,23 +184,29 @@ impl CommodityExchange {
         match consumer_id {
             Some(id) => {
                 match self.consumers.entry(commodity.to_string()) {
-                    Entry::Occupied(entry) => {
-                        match Self::find_duplicate_entity(entry.get(), id) {
-                            Some(_) => {
+                    Entry::Occupied(mut entry) => {
+                        let mut entity_map = entry.get_mut();
+                        entity_map.retain(|_, entity| {
+                            entity.upgrade().is_some()
+                        });
+
+                        match entity_map.entry(*id) {
+                            Entry::Occupied(_) => {
                                 Err(ExchangeError::ConsumerExists)
                             }
 
-                            None => {
-                                let commodity_consumers = entry.into_mut();
-                                commodity_consumers.retain(|e| e.upgrade().is_some());
-                                commodity_consumers.push(entity_ptr);
+                            Entry::Vacant(entry) => {
+                                entry.insert(entity_ptr);
                                 Ok(())
                             }
                         }
                     }
 
                     Entry::Vacant(entry) => {
-                        entry.insert(vec![entity_ptr]);
+                        let mut entity_map = HashMap::new();
+                        entity_map.insert(*id, entity_ptr);
+
+                        entry.insert(entity_map);
                         Ok(())
                     }
                 }
@@ -219,18 +218,18 @@ impl CommodityExchange {
         }
     }
 
-    pub fn update_state(&mut self, entity: Rc<Entity>, commodity: &Commodity, state: CommodityState) -> Result<(), ExchangeError> {
+    pub fn update_state(&mut self, entity: Rc<Entity>, entity_id: &Uuid, commodity: &Commodity, state: CommodityState) -> Result<(), ExchangeError> {
         match state {
             CommodityState::Required => {
-                Self::do_update(&mut self.required, entity, commodity)
+                Self::do_update(&mut self.required, entity, entity_id, commodity)
             }
 
             CommodityState::Available => {
-                Self::do_update(&mut self.available, entity, commodity)
+                Self::do_update(&mut self.available, entity, entity_id, commodity)
             }
 
             CommodityState::InTransit => {
-                Self::do_update(&mut self.in_transit, entity, commodity)
+                Self::do_update(&mut self.in_transit, entity, entity_id, commodity)
             }
 
             CommodityState::Used => {
@@ -265,7 +264,7 @@ impl CommodityExchange {
             .map_or_else(
                 || Vec::new(),
                 |v| {
-                    v.into_iter().filter_map(|e| e.upgrade()).collect()
+                    v.into_iter().filter_map(|(_, entity)| entity.upgrade()).collect()
                 },
             )
     }
@@ -276,7 +275,7 @@ impl CommodityExchange {
             .map_or_else(
                 || Vec::new(),
                 |v| {
-                    v.into_iter().filter_map(|e| e.upgrade()).collect()
+                    v.into_iter().filter_map(|(_, entity)| entity.upgrade()).collect()
                 },
             )
     }

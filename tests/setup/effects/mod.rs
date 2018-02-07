@@ -1,6 +1,6 @@
-use std::rc::Rc;
 use owe::effects;
 use owe::entities::Entity;
+use std::rc::Rc;
 
 pub struct TestEffect0 {}
 
