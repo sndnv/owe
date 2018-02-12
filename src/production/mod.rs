@@ -1,6 +1,4 @@
-use entities::Entity;
-use entities::walker::WalkerProperties;
-use std::fmt;
+use entities::walker::{WalkerProperties, WalkerState};
 
 pub mod exchange;
 
@@ -9,36 +7,25 @@ pub struct Commodity {
     pub amount: u32,
 }
 
-pub struct ProductionStage {
+pub struct CommodityProductionData {
     pub commodity: Commodity,
-    pub used: Vec<Commodity>,
-    pub required: Vec<Commodity>,
+    pub used_commodities: Vec<Commodity>,
 }
 
-pub trait Producer {
-    fn produce_commodity(&mut self, entity: &Entity) -> Option<ProductionStage>;
-
-    //TODO - + return walker effects
-    //TODO - + pass exchange to fn
-    fn produce_walker(&mut self, entity: &Entity) -> Option<WalkerProperties>;
-
-    fn clone_boxed(&self) -> Box<Producer>;
+pub struct CommodityProductionError {
+    pub message: Option<String>,
+    pub missing_commodities: Vec<Commodity>,
 }
 
-impl Clone for Box<Producer> {
-    fn clone(&self) -> Box<Producer> {
-        self.clone_boxed()
-    }
+pub type CommodityProductionResult = Result<Option<CommodityProductionData>, CommodityProductionError>;
+
+pub struct WalkerProductionData {
+    pub state: WalkerState,
+    pub props: WalkerProperties,
 }
 
-impl PartialEq for Producer {
-    fn eq(&self, _: &Producer) -> bool {
-        true //a producer defines only behavior and should not affect equality
-    }
+pub struct WalkerProductionError {
+    pub message: Option<String>,
 }
 
-impl fmt::Debug for Box<Producer> {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter, "Producer {{}}")
-    }
-}
+pub type WalkerProductionResult = Result<Option<WalkerProductionData>, WalkerProductionError>;

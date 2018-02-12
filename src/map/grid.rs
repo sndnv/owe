@@ -1,7 +1,6 @@
-use effects::Effect;
-use entities::{Entity, EntityType};
+use entities::EntityType;
 use entities::structure;
-use map::{Cell, CellState, Grid, GridEntity, GridError};
+use map::{CellState, Grid, GridCell, GridEntity, GridError};
 use ndarray::Array2;
 use pathfinding::dijkstra;
 use std::cmp::Ordering;
@@ -14,16 +13,16 @@ impl Grid {
     //TODO - limit grid size to prevent cursor overflow when casting coords to isize (?)
     pub fn new(size: usize) -> Grid {
         Grid {
-            cells: Array2::from_shape_fn((size, size), |_| Cell::empty()),
+            cells: Array2::from_shape_fn((size, size), |_| GridCell::empty()),
             active_effects: Vec::new(),
             width: size,
             height: size,
         }
     }
 
-    pub fn with_global_effects(size: usize, effects: Vec<Rc<Effect>>) -> Grid {
+    pub fn with_global_effects(size: usize, effects: Vec<Effect>) -> Grid {
         Grid {
-            cells: Array2::from_shape_fn((size, size), |_| Cell::empty()),
+            cells: Array2::from_shape_fn((size, size), |_| GridCell::empty()),
             active_effects: effects,
             width: size,
             height: size,
@@ -142,7 +141,7 @@ impl Grid {
         }
     }
 
-    pub fn add_cell_effect(&mut self, at: (usize, usize), effect: Rc<Effect>) -> Result<CellState, GridError> {
+    pub fn add_cell_effect(&mut self, at: (usize, usize), effect: Effect) -> Result<CellState, GridError> {
         match self.cell_state(at) {
             CellState::OutOfBounds => {
                 Err(GridError::CellUnavailable)
@@ -159,7 +158,7 @@ impl Grid {
         }
     }
 
-    pub fn remove_cell_effect(&mut self, at: (usize, usize), effect: &Rc<Effect>) -> Result<CellState, GridError> {
+    pub fn remove_cell_effect(&mut self, at: (usize, usize), effect: &Effect) -> Result<CellState, GridError> {
         match self.cell_state(at) {
             CellState::OutOfBounds => {
                 Err(GridError::CellUnavailable)
@@ -194,7 +193,7 @@ impl Grid {
         }
     }
 
-    pub fn add_global_effect(&mut self, effect: Rc<Effect>) -> Result<(), GridError> {
+    pub fn add_global_effect(&mut self, effect: Effect) -> Result<(), GridError> {
         if self.is_effect_global(&effect) {
             Err(GridError::EffectPresent)
         } else {
@@ -203,7 +202,7 @@ impl Grid {
         }
     }
 
-    pub fn remove_global_effect(&mut self, effect: &Rc<Effect>) -> Result<(), GridError> {
+    pub fn remove_global_effect(&mut self, effect: &Effect) -> Result<(), GridError> {
         match self.active_effects.iter()
             .position(|e| {
                 Rc::ptr_eq(e, effect)
@@ -229,7 +228,7 @@ impl Grid {
 
     pub fn find_first_adjacent_road(&self, next_to: (usize, usize), id: &Uuid) -> Option<(usize, usize)> {
         self.cells.get(next_to)
-            .and_then(|cell: &Cell| {
+            .and_then(|cell: &GridCell| {
                 cell.entities.get(id).and_then(|grid_entity| {
                     match *grid_entity.entity {
                         Entity::Structure { ref props, .. } => Some(Self::entity_cells(&props.size, grid_entity.parent)),
@@ -265,7 +264,7 @@ impl Grid {
                 neighbours.iter()
                     .find(|&&neighbour| {
                         self.cells.get(neighbour)
-                            .and_then(|cell: &Cell| {
+                            .and_then(|cell: &GridCell| {
                                 cell.entities.values().find(|grid_entity| {
                                     match *grid_entity.entity {
                                         Entity::Road => true,
@@ -366,7 +365,7 @@ impl Grid {
         }).is_none()
     }
 
-    pub fn is_effect_in_cell(&self, cell: (usize, usize), effect: &Rc<Effect>) -> bool {
+    pub fn is_effect_in_cell(&self, cell: (usize, usize), effect: &Effect) -> bool {
         match self.cell_state(cell) {
             CellState::OutOfBounds => {
                 false
@@ -384,7 +383,7 @@ impl Grid {
         }
     }
 
-    pub fn is_effect_global(&self, effect: &Rc<Effect>) -> bool {
+    pub fn is_effect_global(&self, effect: &Effect) -> bool {
         match self.active_effects.iter()
             .position(|e| {
                 Rc::ptr_eq(e, effect)

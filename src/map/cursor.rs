@@ -174,121 +174,15 @@ impl Cursor {
             //TODO - process movement
             //TODO - process action queue
             //TODO - process desirability changes for cells
+            //TODO - send messages to actors to process tick
+            //TODO - send messages to actors to process effects
+            //TODO - update exchange with results from actor processing (?)
+            //TODO - add new entities to grid
         }
-
-        let processing_failures = {
-            //process current cell production and state updates
-            let affected_cell: &mut Cell = grid.cells.get_mut(self.cell).unwrap();
-            affected_cell.entities.iter_mut().fold(vec![], |mut acc, (id, grid_entity)| {
-                let mut updated_entity = (*grid_entity.entity).clone();
-
-                let exchange_updates = match updated_entity {
-                    Entity::Resource { ref props, ref mut producer, ref mut state, .. } => {
-                        producer.as_mut()
-                            .and_then(|p| {
-                                let exchange_update = p.produce_commodity(&*grid_entity.entity)
-                                    .map(|stage| {
-                                        if state.current_amount >= stage.commodity.amount {
-                                            state.current_amount -= stage.commodity.amount;
-                                        } else {
-                                            state.current_amount = 0;
-                                        }
-
-                                        vec![(stage.commodity, CommodityState::Available)]
-                                    });
-
-                                props.replenish_amount
-                                    .map(|amount| {
-                                        if state.current_amount + amount < props.max_amount {
-                                            state.current_amount += amount;
-                                        } else {
-                                            state.current_amount = props.max_amount;
-                                        }
-                                    });
-
-                                exchange_update
-                            })
-                    }
-
-                    Entity::Structure { ref mut producer, ref mut state, .. } => {
-                        producer.as_mut()
-                            .and_then(|p| {
-                                let exchange_update = p.produce_commodity(&*grid_entity.entity)
-                                    .map(|stage| {
-                                        let existing = state.commodities
-                                            .entry(stage.commodity.name.clone())
-                                            .or_insert(0);
-
-                                        *existing += stage.commodity.amount;
-
-                                        let mut updates = stage.required.into_iter()
-                                            .map(|c| (c, CommodityState::Required)).collect::<Vec<_>>();
-
-                                        updates.extend(stage.used.into_iter()
-                                            .map(|c| (c, CommodityState::Used)).collect::<Vec<_>>());
-
-                                        updates.push((stage.commodity, CommodityState::Available));
-
-                                        updates
-                                    });
-
-                                p.produce_walker(&*grid_entity.entity).map(|walker| {
-                                    //TODO - add walker to grid
-                                    //TODO - add walker effects to grid
-                                });
-
-                                //TODO - update current employees count
-
-                                exchange_update
-                            })
-                    }
-
-                    Entity::Walker { ref mut state, .. } => {
-                        //TODO - update state
-                        //TODO - process interaction with nearby entities
-                        //       (work, attack, get/leave commodities)
-                        None
-                    }
-
-                    _ => None //do nothing
-                }.unwrap_or(Vec::new());
-
-                let updated_entity = Rc::new(updated_entity);
-                let mut failed_updates = exchange_updates.into_iter()
-                    .map(|update| {
-                        exchange.update_state(
-                            updated_entity.clone(),
-                            id,
-                            &update.0,
-                            update.1,
-                        )
-                    })
-                    .filter_map(|result| {
-                        match result {
-                            Ok(()) => None,
-                            Err(e) => Some(e)
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-                grid_entity.replace_ref(updated_entity);
-
-                if failed_updates.is_empty() {
-                    acc
-                } else {
-                    acc.append(&mut failed_updates);
-                    acc
-                }
-            })
-        };
 
         //resets the cursor position
         self.cell = next_cell;
 
-        if processing_failures.is_empty() {
-            Ok(())
-        } else {
-            Err(CursorError::ForExchange { errors: processing_failures })
-        }
+        Ok(())
     }
 }

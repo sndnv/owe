@@ -1,85 +1,125 @@
+use actix::{ResponseType, SyncAddress};
 use effects::Effect;
-use entities::Entity;
+use entities::{Entity, EntityActor, EntityAddress};
 use ndarray::Array2;
+use production::{CommodityProductionData, CommodityProductionError, WalkerProductionData, WalkerProductionError};
 use production::exchange::ExchangeError;
 use std::collections::HashMap;
-use std::fmt;
 use std::rc::Rc;
 use uuid::Uuid;
 
 pub mod cursor;
 pub mod grid;
 
-#[derive(Clone, Debug)]
+pub struct ProcessTick {
+    pub tick_size: u32
+}
+
+pub enum TickResult {
+    Structure {
+        commodity_data: Option<CommodityProductionData>,
+        walker_data: Option<WalkerProductionData>,
+        //TODO - effects
+    },
+
+    Walker {
+        //TODO - effects
+    },
+
+    Resource {
+        commodity_data: Option<CommodityProductionData>,
+    },
+}
+
+pub enum TickError {
+    Structure {
+        commodity_error: Option<CommodityProductionError>,
+        walker_error: Option<WalkerProductionError>,
+    },
+
+    Walker {
+        //TODO
+    },
+
+    Resource {
+        commodity_error: CommodityProductionError,
+    },
+}
+
+impl ResponseType for ProcessTick {
+    type Item = TickResult;
+    type Error = TickError;
+}
+
 struct GridEntity {
-    entity: Rc<Entity>,
+    entity_type: EntityType,
+    entity_address: Option<EntityAddress>,
     parent: (usize, usize),
 }
 
 impl GridEntity {
-    pub fn replace_entity(&mut self, entity: Entity) {
+    //TODO
+    pub fn replace_entity(&mut self, entity_address: EntityAddress) {
         self.entity = Rc::new(entity);
     }
 
-    pub fn replace_ref(&mut self, entity: Rc<Entity>) {
+    //TODO
+    pub fn replace_ref(&mut self, entity_address: EntityAddress) {
         self.entity = entity;
     }
 }
 
-#[derive(Clone)]
-struct Cell {
+struct GridCell {
     entities: HashMap<Uuid, GridEntity>,
     desirability: i8,
-    active_effects: Vec<Rc<Effect>>,
+    active_effects: Vec<Effect>,
+    ground_fertility: u8,
+    water_availability: u8,
+    construction_allowed: bool,
 }
 
-impl Cell {
-    fn empty() -> Cell {
-        Cell { entities: HashMap::new(), desirability: 0, active_effects: Vec::new() }
+impl GridCell {
+    fn empty() -> GridCell {
+        GridCell {
+            entities: HashMap::new(),
+            desirability: 0,
+            active_effects: Vec::new(),
+            ground_fertility: 0,
+            water_availability: 0,
+            construction_allowed: true,
+        }
     }
 }
 
-impl fmt::Debug for Cell {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            formatter,
-            "Cell {{ entities: {:?}, desirability: {}, active_effects: {} }}",
-            self.entities, self.desirability, self.active_effects.len()
-        )
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub enum CellState {
+#[derive(PartialEq)]
+pub enum GridCellState {
     AvailableEmpty,
     AvailableOccupied,
     UnavailableOccupied,
     OutOfBounds,
 }
 
-#[derive(Debug)]
 pub enum TraversalType {
     RoadOnly,
     EmptyOnly,
     RoadOrEmpty,
 }
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq)]
 pub enum GridError {
-    CellUnavailable,
+    GridCellUnavailable,
     EntityMissing,
     EffectPresent,
     EffectMissing,
 }
 
 pub struct Grid {
-    cells: Array2<Cell>,
-    active_effects: Vec<Rc<Effect>>,
+    cells: Array2<GridCell>,
+    active_effects: Vec<Effect>,
     width: usize,
     height: usize,
 }
 
-#[derive(Debug)]
 pub enum Direction {
     Up,
     Down,
@@ -87,7 +127,7 @@ pub enum Direction {
     Right,
 }
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq)]
 pub enum CursorError {
     ForGrid { e: GridError },
     ForExchange { errors: Vec<ExchangeError> },

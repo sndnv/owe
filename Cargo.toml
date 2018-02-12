@@ -7,6 +7,8 @@ authors = ["sndnv"]
 ndarray = "0.10.0"
 uuid = { version = "0.5", features = ["v4"] }
 pathfinding = "0.2"
+actix = "0.4"
+futures = "0.1"
 
 [lib]
 name = "owe"

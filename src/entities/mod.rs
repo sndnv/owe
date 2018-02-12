@@ -1,4 +1,4 @@
-use production::Producer;
+use actix::{Actor, Context, SyncAddress};
 
 pub mod structure;
 pub mod resource;
@@ -23,28 +23,22 @@ pub enum EntityType {
     Walker,
 }
 
-#[derive(PartialEq, Clone, Debug)]
-pub enum Entity {
-    Road,
+pub trait Entity<Properties, State>: Sized + 'static {
+    fn get_props(&self) -> Properties;
+    fn get_state(&self) -> State;
+    fn set_state(&mut self, new_state: State) -> ();
+}
 
-    Roadblock,
+pub struct EntityActor<T: Entity> {
+    entity: T
+}
 
-    Doodad { props: doodad::Doodad },
+impl<T: Entity> EntityActor<T> {
+    pub fn new(entity: T) -> EntityActor<T> {
+        EntityActor { entity }
+    }
+}
 
-    Resource {
-        props: resource::ResourceProperties,
-        state: resource::ResourceState,
-        producer: Option<Box<Producer>>,
-    },
-
-    Structure {
-        props: structure::StructureProperties,
-        state: structure::StructureState,
-        producer: Option<Box<Producer>>,
-    },
-
-    Walker {
-        props: walker::WalkerProperties,
-        state: walker::WalkerState,
-    },
+impl<T: Entity> Actor for EntityActor<T> {
+    type Context = Context<Self>;
 }
