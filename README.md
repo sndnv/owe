@@ -1,4 +1,5 @@
 # owe
+Not in active development
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning.
